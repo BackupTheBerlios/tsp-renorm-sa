@@ -3,7 +3,7 @@
 
 #include "tsp.h"
 
-Tsp* import_tsp(char* file);
-void export_tsp(char* file, Tsp* tsp);
+Tsp* import_tsp(FILE* file);
+void export_tsp(FILE* stream, Tsp* tsp);
 
 #endif
