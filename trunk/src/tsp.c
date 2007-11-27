@@ -8,6 +8,7 @@
 #include "tsp.h"
 #include "io.h"
 #include <config.h>
+#include "distance.h"
 
 /*
  * Print usage information.
@@ -44,6 +45,15 @@ main(int argc, char *argv[])
 	argv += optind;
 
    Tsp *tsp = import_tsp(toimport);
+
+	int *route;
+	if ((route = calloc(4, sizeof(int))) == NULL)
+		errx(EX_OSERR, "No memory");
+	for (int i = 0; i < 4; i++)
+		route[i] = 10 * i;
+
+	int route_lngth = 4;
+	warnx("route length %lf", route_length(tsp, route, route_lngth));
 	return EX_OK;
 }
 

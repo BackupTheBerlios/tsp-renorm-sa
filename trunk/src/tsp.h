@@ -6,12 +6,13 @@ typedef struct {
     double y;
 } City;
 
+
 typedef struct {
     char name[32];
     char comment[64];
     
     int dimension;
-    enum Distance_type{
+    enum Distance_type {
         EUC_2D
     } distance_type;
     
