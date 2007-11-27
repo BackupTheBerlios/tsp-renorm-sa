@@ -64,7 +64,7 @@ import_tsp(FILE* file)
 	 /* Read the cities. */
     while (fgets(buffer, 128, file))
     {
-        if (sscanf(buffer, "%d %f %f", &arg_int, &arg_double0, &arg_double1) == 3) {
+        if (sscanf(buffer, "%d %lf %lf", &arg_int, &arg_double0, &arg_double1) == 3) {
             if (arg_int > result->dimension) 
                 errx(EX_DATAERR, "Incorrect city index\n");
             
