@@ -26,18 +26,30 @@
   The weights of the possible edges are 0 if there is no edge, 
   and non zero if there is one
 */
-static double _weights_0[] = {0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.0, 0.0};
-static double _weights_1[] = {1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.707, 0.707, 0.0, 0.0};
-static double _weights_2[] = {0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.0};
-static double _weights_3[] = {1.0, 0.0, 0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.0};
-static double _weights_4[] = {0.0, 0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.707, 0.0, 0.707};
-static double _weights_5[] = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.707, 0.0};
-static double _weights_6[] = {0.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.707, 0.707};
-static double _weights_7[] = {0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707};
-static double _weights_8[] = {0.707, 0.707, 0.0, 0.707, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.414};
-static double _weights_9[] = {0.0, 0.707, 0.707, 0.0, 0.707, 0.0, 0.0, 0.0, 1.0, 0.0, 1.414, 1.0};
-static double _weights_10[] = {0.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.707, 0.0, 1.0, 1.414, 0.0, 1.0};
-static double _weights_11[] = {0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.707, 1.141, 1.0, 1.0, 0.0};
+static double _weights_0[] =
+ {0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.0, 0.0};
+static double _weights_1[] =
+ {1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.707, 0.707, 0.0, 0.0};
+static double _weights_2[] =
+ {0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.0};
+static double _weights_3[] =
+ {1.0, 0.0, 0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.0};
+static double _weights_4[] =
+ {0.0, 0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.707, 0.0, 0.707};
+static double _weights_5[] =
+ {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.707, 0.0};
+static double _weights_6[] =
+ {0.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.707, 0.707};
+static double _weights_7[] =
+ {0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707};
+static double _weights_8[] =
+ {0.707, 0.707, 0.0, 0.707, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.414};
+static double _weights_9[] =
+ {0.0, 0.707, 0.707, 0.0, 0.707, 0.0, 0.0, 0.0, 1.0, 0.0, 1.414, 1.0};
+static double _weights_10[] =
+ {0.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.707, 0.0, 1.0, 1.414, 0.0, 1.0};
+static double _weights_11[] =
+ {0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.707, 1.141, 1.0, 1.0, 0.0};
 
 static double *_weights[12];
 
@@ -54,7 +66,7 @@ void renormalize(Tsp *tsp)
     double max_x, max_y;
     double range_x, range_y;
     int ind_x, ind_y;
-    int **cells = NULL;
+    int **cells = {{NULL}};
     Route ***route_new = NULL;
     Route ***route_prev = NULL;
     
@@ -89,26 +101,26 @@ void renormalize(Tsp *tsp)
     unity = 0;
     while (!unity) {
         /* Generate Cartesian grid, should also be done by a help function (here for testing purposes) */
-        if ((cells= realloc(cells, cells_x * sizeof(int*))) == NULL) 
+        if ((cells= calloc(cells_x, sizeof(int*))) == NULL) 
             errx(EX_OSERR, "Out of memory");
         
-        for (i = 0; i < cells_x; i++) 
-            if ((cells[i] = realloc(cells[i], cells_y * sizeof(int))) == NULL) 
+        for (i = 0; i < cells_x; i++)
+            if ((cells[i] = calloc(cells_y, sizeof(int))) == NULL) 
                 errx(EX_OSERR, "Out of memory");
         
 
         for (x = 0; x < cells_x; x++)
             for (y = 0; y < cells_y; y++)
                 cells[x][y] = 0;
-        
+
         range_x = (max_x - min_x) / cells_x;
         range_y = (max_y - min_y) / cells_y;
         
         /* Check if a city is within a cell, should also be done by a help function (here for testing purposes) */
         unity = 1;
         for (i = 0; i < tsp->dimension; i++) {
-            ind_x = (int)floor(tsp->cities[i].x - min_x / range_x);
-            ind_y = (int)floor(tsp->cities[i].y - min_y / range_y);
+            ind_x = (int)floor((tsp->cities[i].x - min_x) / range_x);
+            ind_y = (int)floor((tsp->cities[i].y - min_y) / range_y);
             
             if (cells[ind_x][ind_y])
                 unity = 0;
@@ -136,10 +148,16 @@ void renormalize(Tsp *tsp)
                                cells[x * 2 + 1][y * 2 + 1]);
                 }
                 else {
-                
+                    //Some code!!!
                 }
             }
         }
+        /* For debugging !*/
+        for (i = 0; i < cells_x; i++)
+            free(cells[i]);
+        free(cells);
+        break;
+        /*End debugging code*/
     }
 }
 
