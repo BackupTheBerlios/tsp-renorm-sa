@@ -4,6 +4,7 @@
 #include <err.h>
 #include <unistd.h>
 #include <limits.h>
+#include <getopt.h>
 
 #include "tsp.h"
 #include "io.h"
