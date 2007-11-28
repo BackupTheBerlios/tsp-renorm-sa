@@ -56,8 +56,8 @@ static double *_weights[12];
 static Route _shortest_routes[9][9][16];
 
 /*
-  * Function which solves the Symmetric TSP by using renormalization technique
-  */
+ * Function which solves the Symmetric TSP by using renormalization technique
+ */
 void renormalize(Tsp *tsp)
 {
     int cells_x, cells_y;
@@ -92,15 +92,19 @@ void renormalize(Tsp *tsp)
     max_y += MARGE;
     
     /*
-             * Renormalize space until unity is reached. The renormalization procedure decreases the scale of the grid used for
-             * approximating the shortest route. The space is divided into cells, the smaller the scale, the more cells. For each cell 
-             * there is checked if a city is within the cell. Now for each block consisting of four cells the route is filled in. This 
-             * route is optimal and should already be calculated by preprocess_routes. The previous iteration decides
-             * the entry and departure place of the block.
-             */
+     * Renormalize space until unity is reached. The renormalization procedure 
+     * decreases the scale of the grid used for approximating the shortest route.
+     * The space is divided into cells, the smaller the scale, the more cells.
+     * For each cell there is checked if a city is within the cell. Now for each
+     * block consisting of four cells the route is filled in. This route is 
+     * optimal and should already be calculated by preprocess_routes. 
+     * The previous iteration decides the entry and departure place of the block.
+     */
     unity = 0;
     while (!unity) {
-        /* Generate Cartesian grid, should also be done by a help function (here for testing purposes) */
+        /* Generate Cartesian grid, should also be done by a help function 
+         *(here for testing purposes)
+         */
         if ((cells= calloc(cells_x, sizeof(int*))) == NULL) 
             errx(EX_OSERR, "Out of memory");
         
@@ -116,7 +120,9 @@ void renormalize(Tsp *tsp)
         range_x = (max_x - min_x) / cells_x;
         range_y = (max_y - min_y) / cells_y;
         
-        /* Check if a city is within a cell, should also be done by a help function (here for testing purposes) */
+        /* Check if a city is within a cell, should also be done 
+         * by a help function (here for testing purposes)
+         */
         unity = 1;
         for (i = 0; i < tsp->dimension; i++) {
             ind_x = (int)floor((tsp->cities[i].x - min_x) / range_x);
@@ -132,40 +138,47 @@ void renormalize(Tsp *tsp)
         if ((route_new = calloc(cells_x / 2, sizeof(Route**))) == NULL)
             errx(EX_OSERR, "Out of memory");
         
-        /* For each block of four cells decide the shortest route which visits the centers of the cell where at least one
-                       * city is located
-                       */
-        for (x = 0; x < cells_x  / 2; x++) {
+        /* For each block of four cells decide the shortest route which 
+         * visits the centers of the cell where at least one
+         * city is located
+         */
+        for (x = 0; x < cells_x  / 2; x++)
             if ((route_new[x] = calloc(cells_y / 2, sizeof(Route*))) == NULL)
                 errx(EX_OSERR, "Out of memory");
-            for (y = 0; y < cells_y / 2; y++) {
-                /* It is the first iteration, so entry and deperature points in a block are not an issue yet */
-                if (!route_prev) {
-                    route_new[x][y] = 
-                      getBasicRoute(cells[x * 2][y * 2],
-                               cells[x * 2][y * 2 + 1],
-                               cells[x * 2 + 1][y * 2],
-                               cells[x * 2 + 1][y * 2 + 1]);
-                }
-                else {
-                    //Some code!!!
-                }
-            }
+        
+        /* It is the first iteration, so entry and deperature 
+         * points in a block are not an issue yet
+         */
+        if (!route_prev) {
+            for(x = 0; x < cells_x / 2; x++)
+                for(y = 0; y < cells_y / 2; y++)
+                    route_new[x][y] = getBasicRoute(cells[x * 2][y * 2],
+                                                  cells[x * 2][y * 2 + 1],
+                                                  cells[x * 2 + 1][y * 2],
+                                                  cells[x * 2 + 1][y * 2 + 1]);
         }
-        /* For debugging !*/
+        else {
+            /* Find a starting  point in the previous route and 
+             * follow this to get the entry and departure points in our 
+             * new route
+             */
+                    
+        }
+        /* For debugging ! */
         for (i = 0; i < cells_x; i++)
             free(cells[i]);
         free(cells);
         break;
-        /*End debugging code*/
+        /* End debugging code */
     }
 }
 
 /*
-  * Get the basic route. A basic route is a case where no entry point and  departure point are specified on the edge of the
-  * square. For each cell is specified if it needs to be visited or not using the arguments. The basic route is a closed path
-  * connecting the selected points
-  */
+ * Get the basic route. A basic route is a case where no entry point and 
+ * departure point are specified on the edge of the square. For each cell
+ * is specified if it needs to be visited or not using the arguments. 
+ * The basic route is a closed path connecting the selected points
+ */
 Route* getBasicRoute(int cell_topleft, int cell_topright,
                      int cell_bottomleft, int cell_bottomright)
 {
@@ -202,9 +215,11 @@ Route* getBasicRoute(int cell_topleft, int cell_topright,
 }
 
 /*
-  * Calculate all shortest routes for the default graph(See top of this file). Here difference is made for the cells which are
-  * visited. For all the nodes shortest paths are calculated for every possible combination of cells which need to be visited
-  * The visited cells are encoded using bitmasks, for making the iteration more simple.
+ * Calculate all shortest routes for the default graph(See top of this file). 
+ * Here difference is made for the cells which are visited. For all 
+ * the nodes shortest paths are calculated for every possible combination of 
+ * cells which need to be visited. The visited cells are encoded using bitmasks,
+ * for making the iteration more simple.
  */
 void preprocess_routes()
 {
@@ -245,8 +260,9 @@ void preprocess_routes()
 }
 
 /*
-  * Check if the route is valid and visits the cells specified in the bitmask <cells>
-  */
+ * Check if the route is valid and visits the cells specified in 
+ * the bitmask <cells>
+ */
 int route_visits_cells(Route* route, int cells)
 {
     if (CELL_TOPLEFT & cells && !node_in_route(NODE_TOPLEFT, route))
@@ -265,8 +281,8 @@ int route_visits_cells(Route* route, int cells)
 }
 
 /*
-  *  Copy a route
-  */
+ *  Copy a route
+ */
 void copy_route(Route* dest, Route* src)
 {
     int i;
@@ -278,8 +294,8 @@ void copy_route(Route* dest, Route* src)
 }
 
 /*
-  Function giving all possible paths between start and end, which visit each 
-  node maximal one time. It results a list of pointers to the found routes
+ * Function giving all possible paths between start and end, which visit each 
+ * node maximal one time. It results a list of pointers to the found routes
  */
 Route_array paths(int start, int end, int visited)
 {
@@ -291,15 +307,17 @@ Route_array paths(int start, int end, int visited)
     routes_new.routes = NULL;
     routes_new.size = 0;
 
-    /* Function wants all the routes with the same start and endpoint for calculating the shortest path, 
-            * Normally you would aspect that this path has a length of 0 (Stay at the location). However maybe he needs to
-            * visit some cells
-             */
+    /* Function wants all the routes with the same start and endpoint for 
+     * calculating the shortest path, Normally you would aspect that this path 
+     * has a length of 0 (Stay at the location). However maybe he needs to
+     * visit some cells
+     */
     if (start == end && visited == 0) {
-        /*Find edges out of the start point. Use the destination of these edge as a start point for a route to
-                        *our endpoint, refuse routes which use the same edge we have selected, since it is not allowed to use 
-                        *an edge twice
-                        */
+        /* Find edges out of the start point. Use the destination of these edge 
+         * as a start point for a route to our endpoint, refuse routes 
+         * which use the same edge we have selected, since it is not 
+         * allowed to use an edge twice
+         */
         for (i = 0; i < NODES; i++) {
             if (_weights[i][end] && !(visited & (1 << i))) {
                 routes_cur = paths(i, start, 0);
@@ -324,9 +342,10 @@ Route_array paths(int start, int end, int visited)
         }
     }
     
-    /* Base case: all paths from a point to itself. Since we are eventually interested in shortest paths, 
-            * there is actually one path (stay at your location)
-             */
+    /* Base case: all paths from a point to itself. 
+     * Since we are eventually interested in shortest paths,
+     * there is actually one path (stay at your location)
+     */
     else if (start == end) {
         if ((route = calloc(1, sizeof(Route))) == NULL)
             errx(EX_OSERR, "Out of memory");
@@ -337,10 +356,12 @@ Route_array paths(int start, int end, int visited)
         add_route(&routes_new, route);
     }
     
-    /* For getting all possible paths you search all connected neighbours. From here the paths are recursively determined
-            * Now you only need to add this current point to the trace. Do not visit neighbours which are already visited in the current
-            * route, since this would produce cycles in the route
-            */
+    /* For getting all possible paths you search all connected neighbours. 
+     * From here the paths are recursively determined. Now you only need to
+     * add this current point to the trace. Do not visit neighbours which 
+     * are already visited in the current route, since this would produce 
+     * cycles in the route
+     */
     else {
         for (i = 0; i < NODES; i++) {
             if (_weights[i][end] && !(visited & (1 << i))) {
@@ -363,8 +384,9 @@ Route_array paths(int start, int end, int visited)
 }
 
 /*
-  * Add a route to a route array. Herefore the allocated size of the array is increased
-  */
+ * Add a route to a route array. 
+ * Herefore the allocated size of the array is increased
+ */
 void add_route(Route_array *array, Route *route)
 {
     assert(array);
@@ -379,8 +401,8 @@ void add_route(Route_array *array, Route *route)
 }
 
 /*
-  * Check if a specific node is in the route
-  */
+ * Check if a specific node is in the route
+ */
 int node_in_route(int node, Route *route)
 {
     int i;
@@ -393,9 +415,9 @@ int node_in_route(int node, Route *route)
 }
 
 /*
-  * Initialize weight matrix of the default graph
-  * Function is needed because this can not be done statically
-  */
+ * Initialize weight matrix of the default graph
+ * Function is needed because this can not be done statically
+ */
 void make_weight_matrix()
 {
     _weights[0] = _weights_0;
