@@ -66,14 +66,20 @@ typedef struct {
 
 void renormalize(Tsp *tsp);
 
-int getRoute(int cell_topleft, int cell_topright,
-             int cell_bottomleft, int cell_bottomright,
-             int route_part, int route);
+Route* getBasicRoute(int cell_topleft, int cell_topright,
+                     int cell_bottomleft, int cell_bottomright);
 
-Route_array paths(int start, int end, int visited);
+                     
 void preprocess_routes();
+Route_array paths(int start, int end, int visited);
 
 void make_weight_matrix();
+
 void add_route(Route_array *array, Route *route);
+void copy_route(Route* dest, Route* src);
+
+int route_visits_cells(Route* route, int cells);
+int node_in_route(int node, Route *route);
+
 
 #endif

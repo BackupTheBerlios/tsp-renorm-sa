@@ -8,7 +8,7 @@
 #include "tsp.h"
 #include "renormalization.h"
 #include "io.h"
-//Static precede with _
+
 /*
   Weights of edges between nodes on the default block.
   The default block is:
@@ -26,23 +26,26 @@
   The weights of the possible edges are 0 if there is no edge, 
   and non zero if there is one
 */
-static double weights_0[] = {0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.0, 0.0};
-static double weights_1[] = {1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.707, 0.707, 0.0, 0.0};
-static double weights_2[] = {0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.0};
-static double weights_3[] = {1.0, 0.0, 0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.0};
-static double weights_4[] = {0.0, 0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.707, 0.0, 0.707};
-static double weights_5[] = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.707, 0.0};
-static double weights_6[] = {0.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.707, 0.707};
-static double weights_7[] = {0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707};
-static double weights_8[] = {0.707, 0.707, 0.0, 0.707, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.414};
-static double weights_9[] = {0.0, 0.707, 0.707, 0.0, 0.707, 0.0, 0.0, 0.0, 1.0, 0.0, 1.414, 1.0};
-static double weights_10[] = {0.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.707, 0.0, 1.0, 1.414, 0.0, 1.0};
-static double weights_11[] = {0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.707, 1.141, 1.0, 1.0, 0.0};
+static double _weights_0[] = {0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.0, 0.0};
+static double _weights_1[] = {1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.707, 0.707, 0.0, 0.0};
+static double _weights_2[] = {0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.0};
+static double _weights_3[] = {1.0, 0.0, 0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.0};
+static double _weights_4[] = {0.0, 0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.707, 0.0, 0.707};
+static double _weights_5[] = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.707, 0.0};
+static double _weights_6[] = {0.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.707, 0.707};
+static double _weights_7[] = {0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707};
+static double _weights_8[] = {0.707, 0.707, 0.0, 0.707, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.414};
+static double _weights_9[] = {0.0, 0.707, 0.707, 0.0, 0.707, 0.0, 0.0, 0.0, 1.0, 0.0, 1.414, 1.0};
+static double _weights_10[] = {0.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.707, 0.0, 1.0, 1.414, 0.0, 1.0};
+static double _weights_11[] = {0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.707, 1.141, 1.0, 1.0, 0.0};
 
-static double *weights[12];
+static double *_weights[12];
 
-Route shortest_routes[9][9][16];
+static Route _shortest_routes[9][9][16];
 
+/*
+  * Function which solves the Symmetric TSP by using renormalization technique
+  */
 void renormalize(Tsp *tsp)
 {
     int cells_x, cells_y;
@@ -52,9 +55,10 @@ void renormalize(Tsp *tsp)
     double range_x, range_y;
     int ind_x, ind_y;
     int **cells = NULL;
-    Route **route_new = NULL;
-    Route **route_prev = NULL;
+    Route ***route_new = NULL;
+    Route ***route_prev = NULL;
     
+    /* Set up grid, only for testing purposes, should call help function */
     cells_x = 2;
     cells_y = 2;
     
@@ -75,9 +79,16 @@ void renormalize(Tsp *tsp)
     min_y -= MARGE;
     max_y += MARGE;
     
+    /*
+             * Renormalize space until unity is reached. The renormalization procedure decreases the scale of the grid used for
+             * approximating the shortest route. The space is divided into cells, the smaller the scale, the more cells. For each cell 
+             * there is checked if a city is within the cell. Now for each block consisting of four cells the route is filled in. This 
+             * route is optimal and should already be calculated by preprocess_routes. The previous iteration decides
+             * the entry and departure place of the block.
+             */
     unity = 0;
     while (!unity) {
-        //Generate Cartesian grid
+        /* Generate Cartesian grid, should also be done by a help function (here for testing purposes) */
         if ((cells= realloc(cells, cells_x * sizeof(int*))) == NULL) 
             errx(EX_OSERR, "Out of memory");
         
@@ -93,7 +104,7 @@ void renormalize(Tsp *tsp)
         range_x = (max_x - min_x) / cells_x;
         range_y = (max_y - min_y) / cells_y;
         
-        //Check if a city is within a cell
+        /* Check if a city is within a cell, should also be done by a help function (here for testing purposes) */
         unity = 1;
         for (i = 0; i < tsp->dimension; i++) {
             ind_x = (int)floor(tsp->cities[i].x - min_x / range_x);
@@ -105,62 +116,81 @@ void renormalize(Tsp *tsp)
             cells[ind_x][ind_y] = 1;
         }
         
-        //Generate a route between the visited cells
-        if ((route_new = calloc(cells_x / 2, sizeof(Route*))) == NULL)
+        /* Reserving space for the new route through the representative points*/
+        if ((route_new = calloc(cells_x / 2, sizeof(Route**))) == NULL)
             errx(EX_OSERR, "Out of memory");
         
+        /* For each block of four cells decide the shortest route which visits the centers of the cell where at least one
+                       * city is located
+                       */
         for (x = 0; x < cells_x  / 2; x++) {
+            if ((route_new[x] = calloc(cells_y / 2, sizeof(Route*))) == NULL)
+                errx(EX_OSERR, "Out of memory");
             for (y = 0; y < cells_y / 2; y++) {
-                if (route_prev) {
-                    //...
+                /* It is the first iteration, so entry and deperature points in a block are not an issue yet */
+                if (!route_prev) {
+                    route_new[x][y] = 
+                      getBasicRoute(cells[x * 2][y * 2],
+                               cells[x * 2][y * 2 + 1],
+                               cells[x * 2 + 1][y * 2],
+                               cells[x * 2 + 1][y * 2 + 1]);
                 }
                 else {
-                    if()
-                    route_new[x][y] = getRoute(cells[x * 2][y * 2], 
-                                               cells[x * 2][y * 2 + 1],
-                                               cells[x * 2 + 1][y * 2],
-                                               cells[x * 2 + 1][y * 2 + 1], 0, 0);
+                
                 }
             }
         }
     }
 }
 
-int getRoute(int cell_topleft, int cell_topright,
-             int cell_bottomleft, int cell_bottomright,
-             int route_part, int route_cur)
+/*
+  * Get the basic route. A basic route is a case where no entry point and  departure point are specified on the edge of the
+  * square. For each cell is specified if it needs to be visited or not using the arguments. The basic route is a closed path
+  * connecting the selected points
+  */
+Route* getBasicRoute(int cell_topleft, int cell_topright,
+                     int cell_bottomleft, int cell_bottomright)
 {
-    int route = 0;
+    Route* route;
     
-    if (cell_topleft)
-        route |= CELL_TOPLEFT;
-    if (cell_topright)
-        route |= CELL_TOPRIGHT;
-    if (cell_bottomleft)
-        route |= CELL_BOTTOMLEFT;
-    if (cell_bottomright)
-        route |= CELL_BOTTOMRIGHT;
-
-    switch(route_part) {
-        case CELL_TOPLEFT:
-            
-            break;
-        case CELL_TOPRIGHT:
-            break;
-        case CELL_BOTTOMLEFT:
-            break;
-        case CELL_BOTTOMRIGHT:
-            break;
-        default:
-            break;
+    if ((route = calloc(1, sizeof(Route))) == NULL)
+        errx(EX_OSERR, "Out of memory");
+    
+    /* Simply visit all cells and you have already the shortest path */
+    if (cell_topleft) {
+        route->trace[route->trace_length] = NODE_TOPLEFT;
+        route->trace_length++;
+    }
+    if (cell_topright) {
+        route->trace[route->trace_length] = NODE_TOPRIGHT;
+        route->trace_length++;
+    }
+    if (cell_bottomleft) {
+        route->trace[route->trace_length] = NODE_BOTTOMLEFT;
+        route->trace_length++;
+    }
+    if (cell_bottomright) {
+        route->trace[route->trace_length] = NODE_BOTTOMRIGHT;
+        route->trace_length++;
+    }
+    
+    /*Repeat last node to close the path (If the path is longer than two)*/
+    if (route->trace_length > 2) {
+        route->trace[route->trace_length] = route->trace[0];
+        route->trace_length++;
     }
     
     return route;
 }
 
+/*
+  * Calculate all shortest routes for the default graph(See top of this file). Here difference is made for the cells which are
+  * visited. For all the nodes shortest paths are calculated for every possible combination of cells which need to be visited
+  * The visited cells are encoded using bitmasks, for making the iteration more simple.
+ */
 void preprocess_routes()
 {
-    int visits;
+    int cells;
     int start, end;
     int i, j;
     int paths_possible;
@@ -172,94 +202,151 @@ void preprocess_routes()
     
     make_weight_matrix();
     
+    /*Iterate over all start and endpoints in the graph */
     for (start = 0; start < 9; start++) {
         for (end = 0; end < 9; end++) {
             path = paths(start, end, 0);
 
-            for (visits = 0; visits < 16; visits++) {
-                if (start != end) {
-                    shortest = NULL;
-                    
-                    for (i = 0; i < path.size; i++) {
-                        visit_topleft = !(CELL_TOPLEFT & visits) ||
-                                (CELL_TOPLEFT & visits && 
-                                node_in_route(NODE_TOPLEFT, path.routes[i]));
-                        visit_topright = !(CELL_TOPRIGHT & visits) ||
-                                (CELL_TOPRIGHT & visits && 
-                                node_in_route(NODE_TOPRIGHT, path.routes[i]));
-                        visit_bottomleft = !(CELL_BOTTOMLEFT & visits) ||
-                                (CELL_BOTTOMLEFT & visits && 
-                                node_in_route(NODE_BOTTOMLEFT, path.routes[i]));
-                        visit_bottomright = !(CELL_BOTTOMRIGHT & visits) ||
-                                (CELL_BOTTOMRIGHT & visits && 
-                                node_in_route(NODE_BOTTOMRIGHT, path.routes[i]));
-                        is_shorter = !shortest || 
-                                (path.routes[i]->length < shortest->length);
-                        if (visit_topleft && visit_topright && visit_bottomleft
-                           && visit_bottomright && is_shorter)
+            /*Decide for each possible combination of visited cells, what the shortest route is*/
+            for (cells = 0; cells < 16; cells++) {
+                for (i = 0; i < path.size; i++) {
+                    if (route_visits_cells(path.routes[i], cells)) {
+                        if (shortest == NULL)
+                            shortest = path.routes[i];
+                        else if (path.routes[i]->length < shortest->length)
                             shortest = path.routes[i];
                     }
+
                     assert(shortest);
-                    for(i = 0; i < NODES; i++)
-                        shortest_routes[start][end][visits].trace[i] =
-                                shortest[i].trace[i];
-                    
-                    shortest_routes[start][end][visits].trace_length =
-                            shortest->trace_length;
-                    
-                    shortest_routes[start][end][visits].length =
-                            shortest->length;
+                    copy_route(&_shortest_routes[start][end][cells], shortest);
                 }
             }
             free(path.routes);
         }
     }
 }
+
+/*
+  * Check if the route is valid and visits the cells specified in the bitmask <cells>
+  */
+int route_visits_cells(Route* route, int cells)
+{
+    if (CELL_TOPLEFT & cells && !node_in_route(NODE_TOPLEFT, route))
+        return 0;
+
+    if (CELL_TOPRIGHT & cells && !node_in_route(NODE_TOPRIGHT, route))
+        return 0;
+
+    if (CELL_BOTTOMLEFT & cells && !node_in_route(NODE_BOTTOMLEFT, route))
+        return 0;
+
+    if (CELL_BOTTOMRIGHT & cells && !node_in_route(NODE_BOTTOMRIGHT, route))
+        return 0;
+    
+    return 1;
+}
+
+/*
+  *  Copy a route
+  */
+void copy_route(Route* dest, Route* src)
+{
+    int i;
+    
+    for (i = 0; i < NODES; i++)
+        dest->trace[i] = src->trace[i];
+    dest->trace_length = src->trace_length;
+    dest->length = src->length;
+}
+
 /*
   Function giving all possible paths between start and end, which visit each 
   node maximal one time. It results a list of pointers to the found routes
  */
 Route_array paths(int start, int end, int visited)
 {
-    Route_array paths_result;
-    Route_array paths_previous;
-    Route* route_new;
+    Route_array routes_new;
+    Route_array routes_cur;
+    Route* route;
     int paths_previous_no, i, j;
     
-    paths_result.routes = NULL;
-    paths_result.size = 0;
-    
-    if(start == end) {
-        if ((route_new = calloc(1, sizeof(Route))) == NULL)
-            errx(EX_OSERR, "Out of memory");
+    routes_new.routes = NULL;
+    routes_new.size = 0;
+
+    /* Function wants all the routes with the same start and endpoint for calculating the shortest path, 
+            * Normally you would aspect that this path has a length of 0 (Stay at the location). However maybe he needs to
+            * visit some cells
+             */
+    if (start == end && visited == 0) {
+        /*Find edges out of the start point. Use the destination of these edge as a start point for a route to
+                        *our endpoint, refuse routes which use the same edge we have selected, since it is not allowed to use 
+                        *an edge twice
+                        */
+        for (i = 0; i < NODES; i++) {
+            if (_weights[i][end] && !(visited & (1 << i))) {
+                routes_cur = paths(i, start, 0);
         
-        route_new->trace[0] = start;
-        route_new->trace_length = 1;
-        route_new->length = 0.0;
-        add_route(&paths_result, route_new);
-        return paths_result;
-    }
-    else {
-        for(i = 0; i < NODES; i++) {
-            if(weights[i][end] && !(visited & (1 << i))) {
-                paths_previous = paths(start, i, visited | (1 << end));
-        
-                for(j = 0; j < paths_previous.size; j++) {
+                for (j = 0; j < routes_cur.size; j++) {
+                    route = routes_cur.routes[j];
                     
-                    route_new = paths_previous.routes[j];
-                    route_new->trace[route_new->trace_length] = end;
-                    route_new->trace_length++;
-                    route_new->length += weights[i][end]; 
+                    /* Route is one edge long, so it uses this edge */
+                    if (route->trace_length == 2) {
+                        free(route);
+                        continue;
+                    }
+                    
+                    route->trace[route->trace_length] = end;
+                    route->trace_length++;
+                    route->length += _weights[i][end]; 
             
-                    add_route(&paths_result, route_new);
+                    add_route(&routes_new, route);
                 }
-                free(paths_previous.routes);
+                free(routes_cur.routes);
             }
         }
     }
-    return paths_result;
+    
+    /* Base case: all paths from a point to itself. Since we are eventually interested in shortest paths, 
+            * there is actually one path (stay at your location)
+             */
+    else if (start == end) {
+        if ((route = calloc(1, sizeof(Route))) == NULL)
+            errx(EX_OSERR, "Out of memory");
+        
+        route->trace[0] = start;
+        route->trace_length = 1;
+        route->length = 0.0;
+        add_route(&routes_new, route);
+    }
+    
+    /* For getting all possible paths you search all connected neighbours. From here the paths are recursively determined
+            * Now you only need to add this current point to the trace. Do not visit neighbours which are already visited in the current
+            * route, since this would produce cycles in the route
+            */
+    else {
+        for (i = 0; i < NODES; i++) {
+            if (_weights[i][end] && !(visited & (1 << i))) {
+                routes_cur = paths(start, i, visited | (1 << end));
+        
+                for (j = 0; j < routes_cur.size; j++) {
+                    
+                    route = routes_cur.routes[j];
+                    route->trace[route->trace_length] = end;
+                    route->trace_length++;
+                    route->length += _weights[i][end]; 
+            
+                    add_route(&routes_new, route);
+                }
+                free(routes_cur.routes);
+            }
+        }
+    }
+    return routes_new;
 }
 
+/*
+  * Add a route to a route array. Herefore the allocated size of the array is increased
+  */
 void add_route(Route_array *array, Route *route)
 {
     assert(array);
@@ -267,35 +354,42 @@ void add_route(Route_array *array, Route *route)
     array->size++;
     array->routes = realloc(array->routes, array->size * sizeof(Route*));
     
-    if(array->routes == NULL)
+    if (array->routes == NULL)
         errx(EX_OSERR, "Out of memory");
     
     array->routes[array->size - 1] = route;
 }
 
+/*
+  * Check if a specific node is in the route
+  */
 int node_in_route(int node, Route *route)
 {
     int i;
 
-    for(i = 0; i < route->trace_length; i++)
-        if(route->trace[i] == node)
+    for (i = 0; i < route->trace_length; i++)
+        if (route->trace[i] == node)
             return 1;
 
     return 0;
 }
 
+/*
+  * Initialize weight matrix of the default graph
+  * Function is needed because this can not be done statically
+  */
 void make_weight_matrix()
 {
-    weights[0] = weights_0;
-    weights[1] = weights_1;
-    weights[2] = weights_2;
-    weights[3] = weights_3;
-    weights[4] = weights_4;
-    weights[5] = weights_5;
-    weights[6] = weights_6;
-    weights[7] = weights_7;
-    weights[8] = weights_8;
-    weights[9] = weights_9;
-    weights[10] = weights_10;
-    weights[11] = weights_11;
+    _weights[0] = _weights_0;
+    _weights[1] = _weights_1;
+    _weights[2] = _weights_2;
+    _weights[3] = _weights_3;
+    _weights[4] = _weights_4;
+    _weights[5] = _weights_5;
+    _weights[6] = _weights_6;
+    _weights[7] = _weights_7;
+    _weights[8] = _weights_8;
+    _weights[9] = _weights_9;
+    _weights[10] = _weights_10;
+    _weights[11] = _weights_11;
 }
