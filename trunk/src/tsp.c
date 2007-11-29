@@ -8,13 +8,16 @@
 
 #include "tsp.h"
 #include "io.h"
-#include <config.h>
 #include "distance.h"
+#include "block.h"
+#include <config.h>
 
 /*
  * Print usage information.
  */
 static void usage(void);
+
+Tsp *tsp;
 
 int 
 main(int argc, char *argv[])
@@ -45,16 +48,13 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-   Tsp *tsp = import_tsp(toimport);
+   tsp = import_tsp(toimport);
+	rotation = 0;
+	rotation = -0.5 * M_PI;
+	rotation = 0.5 * M_PI;
 
-	int *route;
-	if ((route = calloc(4, sizeof(int))) == NULL)
-		errx(EX_OSERR, "No memory");
-	for (int i = 0; i < 4; i++)
-		route[i] = 10 * i;
 
-	int route_lngth = 4;
-	warnx("route length %lf", route_length(tsp, route, route_lngth));
+
 	return EX_OK;
 }
 

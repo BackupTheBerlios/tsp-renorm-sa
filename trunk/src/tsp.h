@@ -20,4 +20,6 @@ typedef struct {
     int *tour;
 } Tsp;
 
+extern Tsp *tsp;
+
 #endif
