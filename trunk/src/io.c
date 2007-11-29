@@ -73,10 +73,26 @@ import_tsp(FILE* file)
         }
     }
     
-    for (arg_int = 0; arg_int < result->dimension; arg_int++)
+   for (arg_int = 0; arg_int < result->dimension; arg_int++)
         result->tour[arg_int] = arg_int;
+
+	/* Center all the cities around the origin. */
+	double x_max = -1;
+	double y_max = -1;
+
+	for (int i = 0; i < result->dimension; i++) {
+		if (result->cities[i].x > x_max)
+			x_max = result->cities[i].x;
+		if (result->cities[i].y > y_max)
+			y_max = result->cities[i].y;
+	}
+
+	for (int i = 0; i < result->dimension; i++) {
+		result->cities[i].x -= x_max / 2;
+		result->cities[i].y -= y_max / 2;
+	}
     
-    return result;
+   return result;
 }
 
 void 
