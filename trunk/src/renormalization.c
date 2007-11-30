@@ -13,47 +13,22 @@
   Weights of edges between nodes on the default block.
   The default block is:
 
-  (0)------------(1)------------(2)
+  (4)------------(5)------------(6)
   |               |              |
-  |     (8)       |      (9)     | 
+  |     (0)       |      (1)     | 
   |               |              |
-  (3)---------------------------(4)
+  (7)---------------------------(8)
   |               |              |
-  |     (10)      |     (11)     | 
+  |     (2)       |     (3)      | 
   |               |              |
-  (5)------------(6)------------(7)
+  (9)------------(10)------------(11)
 
   The weights of the possible edges are 0 if there is no edge, 
   and non zero if there is one
 */
-static double _weights_0[] =
- {0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.0, 0.0};
-static double _weights_1[] =
- {1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.707, 0.707, 0.0, 0.0};
-static double _weights_2[] =
- {0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.0};
-static double _weights_3[] =
- {1.0, 0.0, 0.0, 0.0, 2.0, 1.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.0};
-static double _weights_4[] =
- {0.0, 0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.707, 0.0, 0.707};
-static double _weights_5[] =
- {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.707, 0.0};
-static double _weights_6[] =
- {0.0, 2.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.707, 0.707};
-static double _weights_7[] =
- {0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.707};
-static double _weights_8[] =
- {0.707, 0.707, 0.0, 0.707, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.414};
-static double _weights_9[] =
- {0.0, 0.707, 0.707, 0.0, 0.707, 0.0, 0.0, 0.0, 1.0, 0.0, 1.414, 1.0};
-static double _weights_10[] =
- {0.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.707, 0.0, 1.0, 1.414, 0.0, 1.0};
-static double _weights_11[] =
- {0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.707, 1.141, 1.0, 1.0, 0.0};
+static double _weights[NORMAL_NODES][NORMAL_NODES];
 
-static double *_weights[NODES];
-
-static Route _shortest_routes[BORDER_NODES][BORDER_NODES][MAX_CELLS];
+static Route _shortest_routes[BORDER_NODES][BORDER_NODES][BIT_CELL_MAX];
 
 /*
  * Function which solves the Symmetric TSP by using renormalization technique
@@ -61,10 +36,17 @@ static Route _shortest_routes[BORDER_NODES][BORDER_NODES][MAX_CELLS];
 void renormalize(Tsp *tsp)
 {
     int cells_x, cells_y;
-    int i, x, y, unity;
+    int i, unity;
+    
+    int start, end;
+    int old_x, old_y;
+    int location;
+    int cells_v;
+    
     double min_x, min_y;
     double max_x, max_y;
     double range_x, range_y;
+    
     int ind_x, ind_y;
     int **cells = {{NULL}};
     Route ***route_new = NULL;
@@ -113,9 +95,9 @@ void renormalize(Tsp *tsp)
                 errx(EX_OSERR, "Out of memory");
         
 
-        for (x = 0; x < cells_x; x++)
-            for (y = 0; y < cells_y; y++)
-                cells[x][y] = 0;
+        for (ind_x = 0; ind_x < cells_x; ind_x++)
+            for (ind_y = 0; ind_y < cells_y; ind_y++)
+                cells[ind_x][ind_y] = 0;
 
         range_x = (max_x - min_x) / cells_x;
         range_y = (max_y - min_y) / cells_y;
@@ -142,28 +124,45 @@ void renormalize(Tsp *tsp)
          * visits the centers of the cell where at least one
          * city is located
          */
-        for (x = 0; x < cells_x  / 2; x++)
-            if ((route_new[x] = calloc(cells_y / 2, sizeof(Route*))) == NULL)
+        for (ind_x = 0; ind_x < cells_x  / 2; ind_x++)
+            if ((route_new[ind_x] = calloc(cells_y / 2, sizeof(Route*))) == NULL)
                 errx(EX_OSERR, "Out of memory");
         
         /* It is the first iteration, so entry and deperature 
          * points in a block are not an issue yet
          */
-        if (!route_prev) {
-            for(x = 0; x < cells_x / 2; x++)
-                for(y = 0; y < cells_y / 2; y++)
-                    route_new[x][y] = getBasicRoute(cells[x * 2][y * 2],
-                                                  cells[x * 2][y * 2 + 1],
-                                                  cells[x * 2 + 1][y * 2],
-                                                  cells[x * 2 + 1][y * 2 + 1]);
-        }
-        else {
-            /* Find a starting  point in the previous route and 
-             * follow this to get the entry and departure points in our 
-             * new route
-             */
+        for(ind_x = 0; ind_x < cells_x / 2; ind_x++) {
+            for(ind_y = 0; ind_y < cells_y / 2; ind_y++) {
+                cells_v = bitmask(cells[ind_x * 2][ind_y * 2],
+                                cells[ind_x * 2][ind_y * 2 + 1],
+                                cells[ind_x * 2 + 1][ind_y * 2],
+                                cells[ind_x * 2 + 1][ind_y * 2 + 1]);
+                if(!route_prev)
+                    route_new[ind_x][ind_y] = get_basic_route(cells_v);
+                else {
+                    /* Get the entry and departure points in our 
+                     * new route based on the previous route
+                     */
+                    old_x = (int)floor(ind_x / 2.0);
+                    old_y = (int)floor(ind_y / 2.0);
+                    //Get location and entry in array
+                    if(route_prev[old_x][old_y]) {
+                        start = route_prev[old_x][old_y]->start[ind_x % 2];
+                        end = route_prev[old_x][old_y]->end[ind_x % 2];
+                    }
+                    else {
+                        start = -1;
+                        end = -1;
+                    }
                     
+                    if(start > 0 && end > 0)
+                        route_new = &_shortest_routes[start][end][cells_v];
+                    else
+                        route_new = NULL;
+                }
+            }
         }
+        
         /* For debugging ! */
         for (i = 0; i < cells_x; i++)
             free(cells[i]);
@@ -174,44 +173,172 @@ void renormalize(Tsp *tsp)
 }
 
 /*
+ * Convert visited cells into a bitmask
+ */
+int bitmask(int cell_topleft, int cell_topright,
+            int cell_bottomleft, int cell_bottomright)
+{
+    int mask = 0;
+    
+    if (cell_topleft)
+        mask |= BIT_CELL_TL;
+    if (cell_topright)
+        mask |= BIT_CELL_TR;
+    if (cell_bottomleft)
+        mask |= BIT_CELL_BL;
+    if (cell_bottomright)
+        mask |= BIT_CELL_BR;
+    
+    return mask;
+}
+    
+/*
  * Get the basic route. A basic route is a case where no entry point and 
  * departure point are specified on the edge of the square. For each cell
  * is specified if it needs to be visited or not using the arguments. 
  * The basic route is a closed path connecting the selected points
  */
-Route* getBasicRoute(int cell_topleft, int cell_topright,
-                     int cell_bottomleft, int cell_bottomright)
+Route* get_basic_route(int cells)
 {
     Route* route;
+    int previous_point = 0;
     
     if ((route = calloc(1, sizeof(Route))) == NULL)
         errx(EX_OSERR, "Out of memory");
     
     /* Simply visit all cells and you have already the shortest path */
-    if (cell_topleft) {
-        route->trace[route->trace_length] = NODE_TOPLEFT;
+    if (cells & BIT_CELL_TL) {
+        route->trace[route->trace_length] = NODE_CELL_TL;
         route->trace_length++;
+        
+        previous_point = NODE_CELL_TL;
     }
-    if (cell_topright) {
-        route->trace[route->trace_length] = NODE_TOPRIGHT;
+    if (cells & BIT_CELL_TR) {
+        if(previous_point) {
+            route->trace[route->trace_length] = 
+                    point_on_edge(previous_point, NODE_CELL_TR);
+            route->trace_length++;
+        }
+        
+        route->trace[route->trace_length] = NODE_CELL_TR;
         route->trace_length++;
+        
+        previous_point = NODE_CELL_TR;
     }
-    if (cell_bottomleft) {
-        route->trace[route->trace_length] = NODE_BOTTOMLEFT;
+    if (cells & BIT_CELL_BR) {
+        if(previous_point) {
+            route->trace[route->trace_length] = 
+                    point_on_edge(previous_point, NODE_CELL_BR);
+            route->trace_length++;
+        }
+        
+        route->trace[route->trace_length] = NODE_CELL_BR;
         route->trace_length++;
+        
+        previous_point = NODE_CELL_BR;
     }
-    if (cell_bottomright) {
-        route->trace[route->trace_length] = NODE_BOTTOMRIGHT;
+    if (cells & BIT_CELL_BL) {
+        if(previous_point) {
+            route->trace[route->trace_length] = 
+                    point_on_edge(previous_point, NODE_CELL_BL);
+            route->trace_length++;
+        }
+        route->trace[route->trace_length] = NODE_CELL_BL;
         route->trace_length++;
     }
     
     /*Repeat last node to close the path (If the path is longer than two)*/
     if (route->trace_length > 2) {
+        route->trace[route->trace_length] = 
+                point_on_edge(route->trace[route->trace_length - 1], route->trace[0]);
+        route->trace_length++;
+        
         route->trace[route->trace_length] = route->trace[0];
         route->trace_length++;
     }
     
     return route;
+}
+
+/*
+ * Initialize weight matrix of the default graph
+ * Function is needed because this can not be done statically
+ */
+void make_weight_matrix()
+{
+    int i, j;
+    //Initialize default on zero
+    for(i = 0; i < NORMAL_NODES; i++)
+        for(j = 0; j < NORMAL_NODES; j++)
+            _weights[i][j] = 0.0;
+     
+    _weights[NODE_BORDER_TL][NODE_BORDER_T] = 1.0;
+    _weights[NODE_BORDER_TL][NODE_BORDER_L] = 1.0;
+    _weights[NODE_BORDER_TL][NODE_CELL_TL] = 0.707;
+    
+    _weights[NODE_BORDER_T][NODE_BORDER_TL] = 1.0;
+    _weights[NODE_BORDER_T][NODE_BORDER_TR] = 1.0;
+    _weights[NODE_BORDER_T][NODE_BORDER_B] = 2.0;
+    _weights[NODE_BORDER_T][NODE_CELL_TL] = 0.707;
+    _weights[NODE_BORDER_T][NODE_CELL_TR] = 0.707;
+    
+    _weights[NODE_BORDER_TR][NODE_BORDER_T] = 1.0;
+    _weights[NODE_BORDER_TR][NODE_BORDER_R] = 1.0;
+    _weights[NODE_BORDER_TR][NODE_CELL_TR] = 0.707;
+    
+    _weights[NODE_BORDER_L][NODE_BORDER_TL] = 1.0;
+    _weights[NODE_BORDER_L][NODE_BORDER_BL] = 1.0;
+    _weights[NODE_BORDER_L][NODE_BORDER_R] = 2.0;
+    _weights[NODE_BORDER_L][NODE_CELL_TL] = 0.707;
+    _weights[NODE_BORDER_L][NODE_CELL_BL] = 0.707;
+    
+    _weights[NODE_BORDER_R][NODE_BORDER_TR] = 1.0;
+    _weights[NODE_BORDER_R][NODE_BORDER_BR] = 1.0;
+    _weights[NODE_BORDER_R][NODE_BORDER_L] = 2.0;
+    _weights[NODE_BORDER_R][NODE_CELL_TR] = 0.707;
+    _weights[NODE_BORDER_R][NODE_CELL_BR] = 0.707;
+    
+    _weights[NODE_BORDER_BL][NODE_BORDER_L] = 1.0;
+    _weights[NODE_BORDER_BL][NODE_BORDER_B] = 1.0;
+    _weights[NODE_BORDER_BL][NODE_CELL_BL] = 0.707;
+    
+    _weights[NODE_BORDER_B][NODE_BORDER_BL] = 1.0;
+    _weights[NODE_BORDER_B][NODE_BORDER_BR] = 1.0;
+    _weights[NODE_BORDER_B][NODE_BORDER_T] = 2.0;
+    _weights[NODE_BORDER_B][NODE_CELL_BR] = 0.707;
+    _weights[NODE_BORDER_B][NODE_CELL_BL] = 0.707;
+    
+    _weights[NODE_BORDER_BR][NODE_BORDER_R] = 1.0;
+    _weights[NODE_BORDER_BR][NODE_BORDER_B] = 1.0;
+    _weights[NODE_BORDER_BR][NODE_CELL_BR] = 0.707;
+    
+    _weights[NODE_CELL_TL][NODE_CELL_TR] = 1.0;
+    _weights[NODE_CELL_TL][NODE_CELL_BL] = 1.0;
+    _weights[NODE_CELL_TL][NODE_CELL_BR] = 1.414;
+    _weights[NODE_CELL_TL][NODE_BORDER_TL] = 0.707;
+    _weights[NODE_CELL_TL][NODE_BORDER_T] = 0.707;
+    _weights[NODE_CELL_TL][NODE_BORDER_L] = 0.707;
+    
+    _weights[NODE_CELL_TR][NODE_CELL_TL] = 1.0;
+    _weights[NODE_CELL_TR][NODE_CELL_BR] = 1.0;
+    _weights[NODE_CELL_TR][NODE_CELL_BL] = 1.414;
+    _weights[NODE_CELL_TR][NODE_BORDER_TR] = 0.707;
+    _weights[NODE_CELL_TR][NODE_BORDER_T] = 0.707;
+    _weights[NODE_CELL_TR][NODE_BORDER_R] = 0.707;
+    
+    _weights[NODE_CELL_BL][NODE_CELL_BR] = 1.0;
+    _weights[NODE_CELL_BL][NODE_CELL_TL] = 1.0;
+    _weights[NODE_CELL_BL][NODE_CELL_TR] = 1.414;
+    _weights[NODE_CELL_BL][NODE_BORDER_BL] = 0.707;
+    _weights[NODE_CELL_BL][NODE_BORDER_B] = 0.707;
+    _weights[NODE_CELL_BL][NODE_BORDER_L] = 0.707;
+    
+    _weights[NODE_CELL_BR][NODE_CELL_BL] = 1.0;
+    _weights[NODE_CELL_BR][NODE_CELL_TR] = 1.0;
+    _weights[NODE_CELL_BR][NODE_CELL_TL] = 1.414;
+    _weights[NODE_CELL_BR][NODE_BORDER_BR] = 0.707;
+    _weights[NODE_CELL_BR][NODE_BORDER_B] = 0.707;
+    _weights[NODE_CELL_BR][NODE_BORDER_R] = 0.707;
 }
 
 /*
@@ -238,10 +365,10 @@ void preprocess_routes()
     /*Iterate over all start and endpoints in the graph */
     for (start = 0; start < BORDER_NODES; start++) {
         for (end = 0; end < BORDER_NODES; end++) {
-            path = paths(start, end, 0);
+            path = paths(start + CELL_NODES, end + CELL_NODES, 0);
 
             /*Decide for each possible combination of visited cells, what the shortest route is*/
-            for (cells = 0; cells < MAX_CELLS; cells++) {
+            for (cells = 0; cells < BIT_CELL_MAX; cells++) {
                 shortest = NULL;
                 for (i = 0; i < path.size; i++) {
                     if (route_visits_cells(path.routes[i], cells)) {
@@ -251,7 +378,7 @@ void preprocess_routes()
                             shortest = path.routes[i];
                     }
                 }
-                printf("From %d to %d, via %d\n", start, end, cells);
+                printf("From %d to %d, via %d\n", start + CELL_NODES, end + CELL_NODES, cells);
                 assert(shortest);
                 copy_route(&_shortest_routes[start][end][cells], shortest);
 
@@ -262,41 +389,34 @@ void preprocess_routes()
 }
 
 /*
- * Check if the route is valid and visits the cells specified in 
- * the bitmask <cells>
+ * Finds entry and departure blocks in one route block 
  */
-int route_visits_cells(Route* route, int cells)
-{
-    if (CELL_TOPLEFT & cells && !node_in_route(NODE_TOPLEFT, route))
-        return 0;
-
-    if (CELL_TOPRIGHT & cells && !node_in_route(NODE_TOPRIGHT, route))
-        return 0;
-
-    if (CELL_BOTTOMLEFT & cells && !node_in_route(NODE_BOTTOMLEFT, route))
-        return 0;
-
-    if (CELL_BOTTOMRIGHT & cells && !node_in_route(NODE_BOTTOMRIGHT, route))
-        return 0;
-    
-    return 1;
-}
-
-/*
- *  Copy a route
- */
-void copy_route(Route* dest, Route* src)
+ void set_borderpoints_subblocks(Route* route)
 {
     int i;
+    int start_cur, end_cur;
+    int cell_a, cell_b;
+    int has_start = 0;
     
-    printf("A shortest route[%f]!: ", src->length);
-    for (i = 0; i < NODES; i++) {
-        dest->trace[i] = src->trace[i]; printf("%d.", src->trace[i]); }
-    printf("\n");
-    dest->trace_length = src->trace_length;
-    dest->length = src->length;
+    if(!route)
+        return;
+    
+    for(i = 0; i < route->trace_length; i++) {
+        if(route->trace[i] >= NODE_CELL_TL && route->trace[i] <= NODE_CELL_BR)
+            continue;
+        
+        if(!has_start) {
+            start_cur = route->trace[i];
+            has_start = 1;
+        }
+        else {
+            end_cur = route->trace[i];
+            get_cell_index(start_cur, end_cur, &cell_a, &cell_b);
+            route->start[cell_a] = start_cur;
+            route->end[cell_a] = end_cur;
+        }
+    }
 }
-
 /*
  * Function giving all possible paths between start and end, which visit each 
  * node maximal one time. It results a list of pointers to the found routes
@@ -324,7 +444,7 @@ Route_array paths(int start, int end, int visited)
          * which use the same edge we have selected, since it is not 
          * allowed to use an edge twice
          */
-        for (i = 0; i < NODES; i++) {
+        for (i = 0; i < NORMAL_NODES; i++) {
             if (_weights[i][end]) {
                 routes_cur = paths(i, end, 0);
                 node_between = point_on_edge(i, end);
@@ -389,7 +509,7 @@ Route_array paths(int start, int end, int visited)
      * cycles in the route
      */
     else {
-        for (i = 0; i < NODES; i++) {
+        for (i = 0; i < NORMAL_NODES; i++) {
             if (_weights[i][end] && !(visited & (1 << i))) {
                 routes_cur = paths(start, i, visited | (1 << end));
                 node_between = point_on_edge(i, end);
@@ -434,6 +554,21 @@ void add_route(Route_array *array, Route *route)
 }
 
 /*
+ *  Copy a route
+ */
+void copy_route(Route* dest, Route* src)
+{
+    int i;
+    
+    printf("A shortest route[%f]!: ", src->length);
+    for (i = 0; i < NODES; i++) {
+        dest->trace[i] = src->trace[i]; printf("%d.", src->trace[i]); }
+        printf("\n");
+        dest->trace_length = src->trace_length;
+        dest->length = src->length;
+}
+
+/*
  * Check if a specific node is in the route
  */
 int node_in_route(int node, Route *route)
@@ -448,29 +583,30 @@ int node_in_route(int node, Route *route)
 }
 
 /*
- * Initialize weight matrix of the default graph
- * Function is needed because this can not be done statically
+ * Check if the route is valid and visits the cells specified in 
+ * the bitmask <cells>
  */
-void make_weight_matrix()
+int route_visits_cells(Route* route, int cells)
 {
-    _weights[0] = _weights_0;
-    _weights[1] = _weights_1;
-    _weights[2] = _weights_2;
-    _weights[3] = _weights_3;
-    _weights[4] = _weights_4;
-    _weights[5] = _weights_5;
-    _weights[6] = _weights_6;
-    _weights[7] = _weights_7;
-    _weights[8] = _weights_8;
-    _weights[9] = _weights_9;
-    _weights[10] = _weights_10;
-    _weights[11] = _weights_11;
+    if (BIT_CELL_TL & cells && !node_in_route(NODE_CELL_TL, route))
+        return 0;
+
+    if (BIT_CELL_TR & cells && !node_in_route(NODE_CELL_TR, route))
+        return 0;
+
+    if (BIT_CELL_BL & cells && !node_in_route(NODE_CELL_BL, route))
+        return 0;
+
+    if (BIT_CELL_BR & cells && !node_in_route(NODE_CELL_BR, route))
+        return 0;
+    
+    return 1;
 }
 
 /* 
  * Check if there are extra visitable points on the edge. These points
  * are as follows:
- *
+ * incorrect picture!!!!
  * (0)------------(1)------------(2)
  * |               |              |
  * |     (8)      [12]    (9)     | 
@@ -493,22 +629,87 @@ int point_on_edge(int edge_start, int edge_finish)
         edge_finish = swap;
     }
     
-    if(edge_start == 8 && edge_finish == 9)
-        return 12;
-    if(edge_start == 8 && edge_finish == 10)
-        return 13;
-    if(edge_start == 1 && edge_finish == 6)
-        return 14;
-    if(edge_start == 3 && edge_finish == 4)
-        return 14;
-    if(edge_start == 8 && edge_finish == 11)
-        return 14;
-    if(edge_start == 9 && edge_finish == 10)
-        return 14;
-    if(edge_start == 9 && edge_finish == 11)
-        return 15;
-    if(edge_start == 10 && edge_finish == 11)
-        return 16;
+    if(edge_start == NODE_CELL_TL && edge_finish == NODE_CELL_TR)
+        return NODE_CROSS_T;
+    if(edge_start == NODE_CELL_TL && edge_finish == NODE_CELL_BL)
+        return NODE_CROSS_L;
+    if(edge_start == NODE_BORDER_T && edge_finish == NODE_BORDER_B)
+        return NODE_CROSS_C;
+    if(edge_start == NODE_BORDER_L && edge_finish == NODE_BORDER_R)
+        return NODE_CROSS_C;
+    if(edge_start == NODE_CELL_TL && edge_finish == NODE_CELL_BR)
+        return NODE_CROSS_C;
+    if(edge_start == NODE_CELL_TR && edge_finish == NODE_CELL_BL)
+        return NODE_CROSS_C;
+    if(edge_start == NODE_CELL_TR && edge_finish == NODE_CELL_BR)
+        return NODE_CROSS_R;
+    if(edge_start == NODE_CELL_BL && edge_finish == NODE_CELL_BR)
+        return NODE_CROSS_B;
     
     return -1;
+}
+
+void get_cell_index(int start, int end, int *cell_a, int *cell_b)
+{
+    int start_in_cell[4];
+    int end_in_cell[4];
+    int i;
+    
+    for(i = 0; i < 4; i++) {
+        start_in_cell[i] = 0;
+        end_in_cell[i] = 0;
+    }
+    
+    *cell_a = -1;
+    *cell_b = -1;
+    
+    
+    if(start == NODE_BORDER_TL || start == NODE_BORDER_T ||
+       start == NODE_BORDER_L || start == NODE_CROSS_T ||
+       start == NODE_CROSS_L || start == NODE_CROSS_C)
+        start_in_cell[NODE_CELL_TL] = 1;
+    
+    if(start == NODE_BORDER_TR || start == NODE_BORDER_T ||
+       start == NODE_BORDER_R || start == NODE_CROSS_T ||
+       start == NODE_CROSS_R || start == NODE_CROSS_C)
+        start_in_cell[NODE_CELL_TR] = 1;
+    
+    if(start == NODE_BORDER_BL || start == NODE_BORDER_B ||
+       start == NODE_BORDER_L || start == NODE_CROSS_B ||
+       start == NODE_CROSS_L || start == NODE_CROSS_C)
+        start_in_cell[NODE_CELL_BL] = 1;
+    
+    if(start == NODE_BORDER_BR || start == NODE_BORDER_B ||
+       start == NODE_BORDER_R || start == NODE_CROSS_B ||
+       start == NODE_CROSS_R || start == NODE_CROSS_C)
+        start_in_cell[NODE_CELL_BR] = 1;
+    
+    if(end == NODE_BORDER_TL || end == NODE_BORDER_T ||
+       end == NODE_BORDER_L || end == NODE_CROSS_T ||
+       end == NODE_CROSS_L || end == NODE_CROSS_C)
+        end_in_cell[NODE_CELL_TL] = 1;
+    
+    if(end == NODE_BORDER_TR || end == NODE_BORDER_T ||
+       end == NODE_BORDER_R || end == NODE_CROSS_T ||
+       end == NODE_CROSS_R || end == NODE_CROSS_C)
+        end_in_cell[NODE_CELL_TR] = 1;
+    
+    if(end == NODE_BORDER_BL || end == NODE_BORDER_B ||
+       end == NODE_BORDER_L || end == NODE_CROSS_B ||
+       end == NODE_CROSS_L || end == NODE_CROSS_C)
+        end_in_cell[NODE_CELL_BL] = 1;
+    
+    if(end == NODE_BORDER_BR || end == NODE_BORDER_B ||
+       end == NODE_BORDER_R || end == NODE_CROSS_B ||
+       end == NODE_CROSS_R || end == NODE_CROSS_C)
+        end_in_cell[NODE_CELL_BR] = 1;
+    
+    for(i = 0; i < 4; i++) {
+        if(start_in_cell[i] && end_in_cell[i]) {
+            if(*cell_a)
+                *cell_b = i;
+            else
+                *cell_a = i;
+        }
+    }
 }

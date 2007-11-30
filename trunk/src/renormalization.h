@@ -3,21 +3,48 @@
 
 #define MARGE 0.1
 
-#define CELL_TOPLEFT 1
-#define CELL_TOPRIGHT 2
-#define CELL_BOTTOMLEFT 4
-#define CELL_BOTTOMRIGHT 8
+#define BIT_CELL_TL 1
+#define BIT_CELL_TR 2
+#define BIT_CELL_BL 4
+#define BIT_CELL_BR 8
+#define BIT_CELL_MAX 16
 
-#define MAX_CELLS 16
-
+#define CELL_NODES 4
 #define BORDER_NODES 8
-#define NODES 12
+#define CROSS_NODES 5
+#define NORMAL_NODES CELL_NODES + BORDER_NODES
+#define NODES CELL_NODES + BORDER_NODES + CROSS_NODES
 
-#define NODE_TOPLEFT 8
-#define NODE_TOPRIGHT 9
-#define NODE_BOTTOMLEFT 10
-#define NODE_BOTTOMRIGHT 11
+/*
+ * T = Top
+ * C = Center
+ * L = Left
+ * R = Right
+ * B = Bottom
+ * TL = Top Left
+ * TR = Top Right
+ * BL = Bottom Left
+ * BR = Bottom Right
+ */
+#define NODE_CELL_TL 0
+#define NODE_CELL_TR 1
+#define NODE_CELL_BL 2
+#define NODE_CELL_BR 3
 
+#define NODE_BORDER_TL 4
+#define NODE_BORDER_T 5
+#define NODE_BORDER_TR 6
+#define NODE_BORDER_L 7
+#define NODE_BORDER_R 8
+#define NODE_BORDER_BL 9
+#define NODE_BORDER_B 10
+#define NODE_BORDER_BR 11
+
+#define NODE_CROSS_T 12
+#define NODE_CROSS_L 13
+#define NODE_CROSS_C 14
+#define NODE_CROSS_R 15
+#define NODE_CROSS_B 15
 
 /*
  Struct for computing now shortest paths on the two by two blocks
@@ -26,9 +53,13 @@
   - Length is the length of the tour
   - Visits are the visited centrum points(Bit mask) */
 typedef struct {
-    int trace[NODES + 6];
+    int trace[NODES];
     int trace_length;
+    
     double length;
+    
+    int start[4];
+    int end[4];
 } Route;
 
 typedef struct {
@@ -38,14 +69,15 @@ typedef struct {
 
 void renormalize(Tsp *tsp);
 
-Route* getBasicRoute(int cell_topleft, int cell_topright,
-                     int cell_bottomleft, int cell_bottomright);
+Route* get_basic_route(int cells);
 
                      
 void preprocess_routes();
 Route_array paths(int start, int end, int visited);
 
 void make_weight_matrix();
+int bitmask(int cell_topleft, int cell_topright,
+            int cell_bottomleft, int cell_bottomright);
 
 void add_route(Route_array *array, Route *route);
 void copy_route(Route* dest, Route* src);
@@ -53,5 +85,5 @@ void copy_route(Route* dest, Route* src);
 int route_visits_cells(Route* route, int cells);
 int node_in_route(int node, Route *route);
 
-
+void get_cell_index(int start, int end, int *cell_a, int *cell_b);
 #endif
