@@ -51,9 +51,9 @@ static double _weights_10[] =
 static double _weights_11[] =
  {0.0, 0.0, 0.0, 0.0, 0.707, 0.0, 0.707, 0.707, 1.141, 1.0, 1.0, 0.0};
 
-static double *_weights[12];
+static double *_weights[NODES];
 
-static Route _shortest_routes[9][9][16];
+static Route _shortest_routes[BORDER_NODES][BORDER_NODES][MAX_CELLS];
 
 /*
  * Function which solves the Symmetric TSP by using renormalization technique
@@ -236,12 +236,13 @@ void preprocess_routes()
     make_weight_matrix();
     
     /*Iterate over all start and endpoints in the graph */
-    for (start = 0; start < 9; start++) {
-        for (end = 0; end < 9; end++) {
+    for (start = 0; start < BORDER_NODES; start++) {
+        for (end = 0; end < BORDER_NODES; end++) {
             path = paths(start, end, 0);
 
             /*Decide for each possible combination of visited cells, what the shortest route is*/
-            for (cells = 0; cells < 16; cells++) {
+            for (cells = 0; cells < MAX_CELLS; cells++) {
+                shortest = NULL;
                 for (i = 0; i < path.size; i++) {
                     if (route_visits_cells(path.routes[i], cells)) {
                         if (shortest == NULL)
@@ -249,10 +250,11 @@ void preprocess_routes()
                         else if (path.routes[i]->length < shortest->length)
                             shortest = path.routes[i];
                     }
-
-                    assert(shortest);
-                    copy_route(&_shortest_routes[start][end][cells], shortest);
                 }
+                printf("From %d to %d, via %d\n", start, end, cells);
+                assert(shortest);
+                copy_route(&_shortest_routes[start][end][cells], shortest);
+
             }
             free(path.routes);
         }
@@ -287,8 +289,10 @@ void copy_route(Route* dest, Route* src)
 {
     int i;
     
-    for (i = 0; i < NODES; i++)
-        dest->trace[i] = src->trace[i];
+    printf("A shortest route[%f]!: ", src->length);
+    for (i = 0; i < NODES; i++) {
+        dest->trace[i] = src->trace[i]; printf("%d.", src->trace[i]); }
+    printf("\n");
     dest->trace_length = src->trace_length;
     dest->length = src->length;
 }
@@ -302,7 +306,9 @@ Route_array paths(int start, int end, int visited)
     Route_array routes_new;
     Route_array routes_cur;
     Route* route;
-    int paths_previous_no, i, j;
+    int paths_previous_no, i, j, k;
+    int node_between;
+    int diff;
     
     routes_new.routes = NULL;
     routes_new.size = 0;
@@ -319,22 +325,42 @@ Route_array paths(int start, int end, int visited)
          * allowed to use an edge twice
          */
         for (i = 0; i < NODES; i++) {
-            if (_weights[i][end] && !(visited & (1 << i))) {
-                routes_cur = paths(i, start, 0);
+            if (_weights[i][end]) {
+                routes_cur = paths(i, end, 0);
+                node_between = point_on_edge(i, end);
         
                 for (j = 0; j < routes_cur.size; j++) {
                     route = routes_cur.routes[j];
                     
-                    /* Route is one edge long, so it uses this edge */
+                    /* Route is one edge long uses this discovered edge */
                     if (route->trace_length == 2) {
                         free(route);
                         continue;
                     }
+                    else if (route->trace_length == 3 && 
+                              route->trace[0] == start &&
+                              route->trace[1] == node_between &&
+                              route->trace[2] == i) {
+                        free(route);
+                        continue;
+                    }
                     
-                    route->trace[route->trace_length] = end;
+                    diff = node_between == -1 ? 1 : 2;
+                    
+                    /* Put our startpoint in front again to make round tour */
+                    for (k = route->trace_length; k > diff - 1; k--)
+                        route->trace[k] = route->trace[k - diff];
+                    
+                    route->trace[0] = start;
                     route->trace_length++;
-                    route->length += _weights[i][end]; 
-            
+                    route->length += _weights[start][i]; 
+
+
+                    if (node_between != -1) {
+                        route->trace[1] = node_between;
+                        route->trace_length++;
+                    }
+                    
                     add_route(&routes_new, route);
                 }
                 free(routes_cur.routes);
@@ -366,10 +392,17 @@ Route_array paths(int start, int end, int visited)
         for (i = 0; i < NODES; i++) {
             if (_weights[i][end] && !(visited & (1 << i))) {
                 routes_cur = paths(start, i, visited | (1 << end));
+                node_between = point_on_edge(i, end);
         
                 for (j = 0; j < routes_cur.size; j++) {
-                    
                     route = routes_cur.routes[j];
+                    
+                    /* Edge this edge to the route (With the node in between) */
+                    if (node_between != -1) {
+                        route->trace[route->trace_length] = node_between;
+                        route->trace_length++;
+                    }
+                    
                     route->trace[route->trace_length] = end;
                     route->trace_length++;
                     route->length += _weights[i][end]; 
@@ -432,4 +465,50 @@ void make_weight_matrix()
     _weights[9] = _weights_9;
     _weights[10] = _weights_10;
     _weights[11] = _weights_11;
+}
+
+/* 
+ * Check if there are extra visitable points on the edge. These points
+ * are as follows:
+ *
+ * (0)------------(1)------------(2)
+ * |               |              |
+ * |     (8)      [12]    (9)     | 
+ * |               |              |
+ * (3)---[13]-----[14]---[15]----(4)
+ * |               |              |
+ * |     (10)     [16]   (11)     | 
+ * |               |              |
+ * (5)------------(6)------------(7)
+ *
+ * if so return the number of the edge(12-16). Otherwise return -1;
+ */
+int point_on_edge(int edge_start, int edge_finish)
+{
+    int swap;
+    
+    if (edge_start > edge_finish) {
+        swap = edge_start;
+        edge_start = edge_finish;
+        edge_finish = swap;
+    }
+    
+    if(edge_start == 8 && edge_finish == 9)
+        return 12;
+    if(edge_start == 8 && edge_finish == 10)
+        return 13;
+    if(edge_start == 1 && edge_finish == 6)
+        return 14;
+    if(edge_start == 3 && edge_finish == 4)
+        return 14;
+    if(edge_start == 8 && edge_finish == 11)
+        return 14;
+    if(edge_start == 9 && edge_finish == 10)
+        return 14;
+    if(edge_start == 9 && edge_finish == 11)
+        return 15;
+    if(edge_start == 10 && edge_finish == 11)
+        return 16;
+    
+    return -1;
 }
