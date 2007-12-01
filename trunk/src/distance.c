@@ -6,7 +6,7 @@
 #include "distance.h"
 
 double 
-route_length(const Tsp *tsp, const int *route, int num_cities)
+route_length(const int *route, int num_cities)
 {
 	assert(num_cities != 0);
 	assert(route != NULL);
