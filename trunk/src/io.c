@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 
 #include "io.h"
 
@@ -64,7 +65,8 @@ import_tsp(FILE* file)
 	 /* Read the cities. */
     while (fgets(buffer, 128, file))
     {
-        if (sscanf(buffer, "%d %lf %lf", &arg_int, &arg_double0, &arg_double1) == 3) {
+        if (sscanf(buffer, "%d %lf %lf", &arg_int, &arg_double0, &arg_double1) 
+				  == 3) {
             if (arg_int > result->dimension) 
                 errx(EX_DATAERR, "Incorrect city index\n");
             
@@ -77,21 +79,27 @@ import_tsp(FILE* file)
         result->tour[arg_int] = arg_int;
 
 	/* Center all the cities around the origin. */
-	double x_max = -1;
-	double y_max = -1;
+	double x_max = -FP_INFINITE;
+	double x_min = FP_INFINITE;
+	double y_max = -FP_INFINITE;
+	double y_min = FP_INFINITE;
 
 	for (int i = 0; i < result->dimension; i++) {
 		if (result->cities[i].x > x_max)
 			x_max = result->cities[i].x;
+		if (result->cities[i].x < x_min)
+			x_min = result->cities[i].x;
 		if (result->cities[i].y > y_max)
 			y_max = result->cities[i].y;
+		if (result->cities[i].y < y_min)
+			y_min = result->cities[i].y;
 	}
 
 	for (int i = 0; i < result->dimension; i++) {
-		result->cities[i].x -= x_max / 2;
-		result->cities[i].y -= y_max / 2;
+		result->cities[i].x -= (x_max - x_min) / 2.0;
+		result->cities[i].y -= (y_max - y_min) / 2.0;
 	}
-    
+	
    return result;
 }
 
@@ -117,5 +125,3 @@ export_tsp(FILE* stream, Tsp* tsp)
         city = city->next;
     } while(city != tour->cities);*/
 }
-
-
