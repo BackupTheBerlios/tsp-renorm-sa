@@ -49,8 +49,8 @@ create_grd(const unsigned int *length, const unsigned int *height)
 
 	
 	/* Compute the necessary values which will be used to index the cities. */
-	double x_step = fabs(_x_min - _x_max) / (double)(*length - 1);
-	double y_step = fabs(_y_min - _y_max) / (double)(*height - 1);
+	double x_step = fabs(_x_min - _x_max) / (double)(*length);
+	double y_step = fabs(_y_min - _y_max) / (double)(*height);
 
 	/* Determine for each city in which block it should be added. If multiple
 	 * cities are in one block, set the block to contain MANY_CITIES otherwise
@@ -157,8 +157,8 @@ print_grd_points(grd *grid, FILE *f)
 	assert(grid != NULL);
 	assert(f != NULL);
 	/* Compute the necessary values which will be used to index the cities. */
-	double x_step = fabs(_x_min - _x_max) / (double)(grid->length - 1);
-	double y_step = fabs(_y_min - _y_max) / (double)(grid->height - 1);
+	double x_step = fabs(_x_min - _x_max) / (double)(grid->length);
+	double y_step = fabs(_y_min - _y_max) / (double)(grid->height);
 	
 	/* Print the header. */
 	(void)fprintf(f, "x y pch\n");
