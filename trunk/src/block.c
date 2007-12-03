@@ -93,7 +93,7 @@ static void
 rotate(void)
 {
 	/* It the old rotation is the same nothing has to be done. */
-	if (_rotation == rotation) 
+	if (_rotation != FP_NAN && _rotation == rotation) 
 		return;
 
 	/* Free and allocate memory for the cities in the rotated plane. */
