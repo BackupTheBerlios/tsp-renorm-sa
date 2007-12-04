@@ -1,6 +1,7 @@
 #include <sysexits.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <err.h>
 #include <unistd.h>
 #include <limits.h>
@@ -48,13 +49,17 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-   tsp = import_tsp(toimport);
-	rotation = 0;
-	rotation = -0.5 * M_PI;
-	rotation = 0.5 * M_PI;
-
-
-
+    tsp = import_tsp(toimport);
+//	rotation = -0.5 * M_PI;
+	rotation = 0.5 * 3.14;
+//	rotation = 0;
+    preprocess_routes();
+    
+    for (rotation = 0; rotation < 6.28; rotation += 0.314) {
+        int* cities = renormalize();
+        printf("[%f]Length of tour is %f\n", rotation, route_length(cities, tsp->dimension));        
+    }
+    
 	return EX_OK;
 }
 
