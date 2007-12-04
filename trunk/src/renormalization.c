@@ -173,9 +173,22 @@ found2:
                 }
             }    
         }
+        
+        /* Store iteration */
         char name[32];
-        sprintf(name, "it%d", cells_x);
+        sprintf(name, "/tmp/it%d", cells_x);
         print_routes(route_new, cells_x / 2, cells_y / 2, fopen(name, "w"));
+        
+        /* Free previous route */
+        if (route_prev)
+        {
+            for (ind_x = 0; ind_x < cells_x / 4; ind_x++)
+                if (route_prev[ind_x])
+                    free(route_prev[ind_x]);
+            
+            free(route_prev);
+        }
+            
         route_prev = route_new;
         
         if (unity)
@@ -191,6 +204,15 @@ found2:
     
     int* result = map_on_route(route_prev, grid, cells_x, cells_y);
     free_grd(grid);
+    
+    if (route_new)
+    {
+        for (ind_x = 0; ind_x < cells_x / 2; ind_x++)
+            if (route_new[ind_x])
+                free(route_new[ind_x]);
+        
+        free(route_new);
+    }
     
     return result;
 }
