@@ -40,7 +40,9 @@ int* renormalize()
     int i, unity;
     
     int start, end;
+    int new_x, new_y;
     int old_x, old_y;
+    int start_x, start_y;
     int location;
     int cells_v;
     
@@ -68,7 +70,6 @@ int* renormalize()
      */
     unity = 0;
     while (!unity) {
-        printf("Iteration %d\n", (int)log2(cells_x));
         /* Generate Cartesian grid, should also be done by a help function 
          *(here for testing purposes)
          */
@@ -97,39 +98,84 @@ int* renormalize()
         /* It is the first iteration, so entry and deperature 
          * points in a block are not an issue yet
          */
-        for(ind_x = 0; ind_x < cells_x / 2; ind_x++) {
-            for(ind_y = 0; ind_y < cells_y / 2; ind_y++) {
-                cells_v = bitmask(grid, ind_x * 2, ind_y * 2);
-                if(!route_prev)
-                    route_new[ind_x][ind_y] = get_basic_route(cells_v);
-                else {
-                    /* Get the entry and departure points in our 
-                     * new route based on the previous route
-                     */
-                    old_x = floor(ind_x / 2.0);
-                    old_y = floor(ind_y / 2.0);
-                    
-                    location = (ind_x % 2) + 2 * (ind_y % 2);
-                    
-                    //Get location and entry in array
-                    if(route_prev[old_x][old_y]) {
-                        start = route_prev[old_x][old_y]->start[location];
-                        end = route_prev[old_x][old_y]->end[location];
-                    }
+        if(cells_x < 64) {
+            for(ind_x = 0; ind_x < cells_x / 2; ind_x++) {
+                for(ind_y = 0; ind_y < cells_y / 2; ind_y++) {
+                    cells_v = bitmask(grid, ind_x * 2, ind_y * 2);
+                    if(!route_prev)
+                        route_new[ind_x][ind_y] = get_basic_route(cells_v);
                     else {
-                        start = -1;
-                        end = -1;
+                        /* Get the entry and departure points in our 
+                        * new route based on the previous route
+                        */
+                        old_x = floor(ind_x / 2.0);
+                        old_y = floor(ind_y / 2.0);
+                        
+                        location = (ind_x % 2) + 2 * (ind_y % 2);
+                        
+                        //Get location and entry in array
+                        if(route_prev[old_x][old_y]) {
+                            start = route_prev[old_x][old_y]->start[location];
+                            end = route_prev[old_x][old_y]->end[location];
+                        }
+                        else {
+                            start = -1;
+                            end = -1;
+                        }
+                        
+                        if(start != -1 && end != -1) {
+                            route_new[ind_x][ind_y] = 
+                            _shortest_routes[start - CELL_NODES][end - CELL_NODES][cells_v];
+                        }
+                        else
+                            route_new[ind_x][ind_y] = NULL;
                     }
-                    
-                    if(start != -1 && end != -1) {
-                        route_new[ind_x][ind_y] = 
-                          _shortest_routes[start - CELL_NODES][end - CELL_NODES][cells_v];
-                    }
-                    else
-                        route_new[ind_x][ind_y] = NULL;
                 }
             }
         }
+        else {
+            //Find first spot to retrace route
+            for (ind_x = 0; ind_x < cells_x / 4; ind_x++)
+                for (ind_y = 0; ind_y < cells_y / 4; ind_y++)
+                    if (route_prev[ind_x][ind_y])
+                        goto found2;
+            errx(1, "Nothing found!");
+found2:
+            start_x = ind_x;
+            start_y = ind_y;
+            
+            while(1) {
+                for (location = 0; location < CELL_NODES; location++) {
+                    new_x = 2 * ind_x;
+                    new_y = 2 * ind_y;
+                    
+                    if(location % 2)
+                        new_x++;
+                    if(location > 1)
+                        new_y++;
+                    
+                    cells_v = bitmask(grid, new_x * 2, new_y * 2);
+                    
+                    start = route_prev[ind_x][ind_y]->start[location];
+                    end = route_prev[ind_x][ind_y]->end[location];
+                    
+                    if(start != -1 && end != -1) {
+                        route_new[new_x][new_y] = 
+                        _shortest_routes[start - CELL_NODES][end - CELL_NODES][cells_v];
+                    }
+                    else
+                        route_new[new_x][new_y] = NULL;
+                }
+                get_next_cell(route_prev, &ind_x, &ind_y, cells_x, cells_y);
+                
+                if (ind_x == start_x && ind_y == start_y) {
+                    break;
+                }
+            }    
+        }
+        char name[32];
+        sprintf(name, "it%d", cells_x);
+        print_routes(route_new, cells_x / 2, cells_y / 2, fopen(name, "w"));
         route_prev = route_new;
         
         if (unity)
@@ -302,10 +348,8 @@ Route* get_basic_route(int cells)
         set_borderpoints_subblocks(route);
     }
     else {
-        errx(EX_DATAERR, "Try other range!\n");
-    }
-
-    
+        errx(EX_DATAERR, "Try other grid range!\n");
+    }    
     return route;
 }
 
@@ -321,44 +365,24 @@ void make_weight_matrix()
         for(j = 0; j < NORMAL_NODES; j++)
             _weights[i][j] = 0.0;
      
-//    _weights[NODE_BORDER_TL][NODE_BORDER_T] = 1.0;
-//    _weights[NODE_BORDER_TL][NODE_BORDER_L] = 1.0;
     _weights[NODE_BORDER_TL][NODE_CELL_TL] = 0.707;
     
-//    _weights[NODE_BORDER_T][NODE_BORDER_TL] = 1.0;
-//    _weights[NODE_BORDER_T][NODE_BORDER_TR] = 1.0;
-//    _weights[NODE_BORDER_T][NODE_BORDER_B] = 2.0;
     _weights[NODE_BORDER_T][NODE_CELL_TL] = 0.707;
     _weights[NODE_BORDER_T][NODE_CELL_TR] = 0.707;
     
-//    _weights[NODE_BORDER_TR][NODE_BORDER_T] = 1.0;
-//    _weights[NODE_BORDER_TR][NODE_BORDER_R] = 1.0;
     _weights[NODE_BORDER_TR][NODE_CELL_TR] = 0.707;
     
-//    _weights[NODE_BORDER_L][NODE_BORDER_TL] = 1.0;
-//    _weights[NODE_BORDER_L][NODE_BORDER_BL] = 1.0;
-//    _weights[NODE_BORDER_L][NODE_BORDER_R] = 2.0;
     _weights[NODE_BORDER_L][NODE_CELL_TL] = 0.707;
     _weights[NODE_BORDER_L][NODE_CELL_BL] = 0.707;
     
-//    _weights[NODE_BORDER_R][NODE_BORDER_TR] = 1.0;
-//    _weights[NODE_BORDER_R][NODE_BORDER_BR] = 1.0;
-//    _weights[NODE_BORDER_R][NODE_BORDER_L] = 2.0;
     _weights[NODE_BORDER_R][NODE_CELL_TR] = 0.707;
     _weights[NODE_BORDER_R][NODE_CELL_BR] = 0.707;
     
-//    _weights[NODE_BORDER_BL][NODE_BORDER_L] = 1.0;
-//    _weights[NODE_BORDER_BL][NODE_BORDER_B] = 1.0;
     _weights[NODE_BORDER_BL][NODE_CELL_BL] = 0.707;
     
-//    _weights[NODE_BORDER_B][NODE_BORDER_BL] = 1.0;
-//    _weights[NODE_BORDER_B][NODE_BORDER_BR] = 1.0;
-//    _weights[NODE_BORDER_B][NODE_BORDER_T] = 2.0;
     _weights[NODE_BORDER_B][NODE_CELL_BR] = 0.707;
     _weights[NODE_BORDER_B][NODE_CELL_BL] = 0.707;
     
-//    _weights[NODE_BORDER_BR][NODE_BORDER_R] = 1.0;
-//    _weights[NODE_BORDER_BR][NODE_BORDER_B] = 1.0;
     _weights[NODE_BORDER_BR][NODE_CELL_BR] = 0.707;
     
     _weights[NODE_CELL_TL][NODE_CELL_TR] = 1.0;
@@ -734,10 +758,6 @@ int point_on_edge(int edge_start, int edge_finish)
         return NODE_CROSS_T;
     if(edge_start == NODE_CELL_TL && edge_finish == NODE_CELL_BL)
         return NODE_CROSS_L;
-    if(edge_start == NODE_BORDER_T && edge_finish == NODE_BORDER_B)
-        return NODE_CROSS_C;
-    if(edge_start == NODE_BORDER_L && edge_finish == NODE_BORDER_R)
-        return NODE_CROSS_C;
     if(edge_start == NODE_CELL_TL && edge_finish == NODE_CELL_BR)
         return NODE_CROSS_C;
     if(edge_start == NODE_CELL_TR && edge_finish == NODE_CELL_BL)
@@ -1004,3 +1024,92 @@ int convert_node(int location, int main_node)
     }
     return main_node;
 }
+static void node_offset(int node, double *x, double *y)
+{
+    *x = 0.0;
+    *y = 0.0;
+    
+    switch(node)
+    {
+        case NODE_CELL_TL:
+        case NODE_CELL_BL:
+        case NODE_CROSS_L:
+            *x = 0.5;
+            break;
+        case NODE_BORDER_T:
+        case NODE_BORDER_B:
+        case NODE_CROSS_T:
+        case NODE_CROSS_C:
+        case NODE_CROSS_B:
+            *x = 1.0;
+            break;
+        case NODE_CELL_TR:
+        case NODE_CELL_BR:
+        case NODE_CROSS_R:
+            *x = 1.5;
+            break;
+        case NODE_BORDER_TR:
+        case NODE_BORDER_BR:
+            *x = 2.0;
+            break;
+    }
+
+    switch(node)
+    {
+        case NODE_CELL_TL:
+        case NODE_CELL_TR:
+        case NODE_CROSS_T:
+            *x = 0.5;
+            break;
+        case NODE_BORDER_L:
+        case NODE_BORDER_R:
+        case NODE_CROSS_L:
+        case NODE_CROSS_C:
+        case NODE_CROSS_R:
+            *x = 1.0;
+            break;
+        case NODE_CELL_BL:
+        case NODE_CELL_BR:
+        case NODE_CROSS_B:
+            *x = 1.5;
+            break;
+        case NODE_BORDER_BL:
+        case NODE_BORDER_BR:
+            *x = 2.0;
+            break;
+    }
+}
+
+void print_routes(Route*** routes, int cells_x, int cells_y, FILE *f)
+{
+    double offset_x, offset_y;
+    double new_x, new_y;
+    double prev_x, prev_y;
+    
+    int x, y, t;
+	
+	/* Print the header. */
+	(void)fprintf(f, "x y\n");
+
+	for (x = 0; x < cells_x; x++) {
+        for (y = 0; y < cells_y; y++) {
+            if (!routes[x][y])
+                continue;
+            
+            for (t = 1; t < routes[x][y]->trace_length; t++) {
+                node_offset(routes[x][y]->trace[t - 1], &offset_x, &offset_y);
+                prev_x = 2.0 * x + offset_x;
+                prev_y = 2.0 * y + offset_y;
+
+                node_offset(routes[x][y]->trace[t], &offset_x, &offset_y);
+                new_x = 2.0 * x + offset_x;
+                new_y = 2.0 * y + offset_y;
+                
+                (void)fprintf(f, "%lf %lf\n", prev_x, prev_y);
+                (void)fprintf(f, "%lf %lf\n", new_x, new_y);
+                (void)fprintf(f, "%lf NA\n");
+            }
+        }
+    }
+}
+
