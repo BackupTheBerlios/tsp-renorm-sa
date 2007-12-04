@@ -77,9 +77,10 @@ int* renormalize()
         /* Check if we are already at unity */
         unity = 1;
         for (ind_x = 0; ind_x < cells_x; ind_x++)
-            for (ind_y = 0; ind_y < cells_y; ind_y++)
+            for (ind_y = 0; ind_y < cells_y; ind_y++) {
                 if (has_cities(grid->block[ind_x][ind_y]))
-                    unity = 0;
+                    unity = 0;                
+            }
         
         /* Reserving space for the new route through the representative points*/
         if ((route_new = calloc(cells_x / 2, sizeof(Route**))) == NULL)
@@ -153,7 +154,9 @@ int* map_on_route(Route*** routeblock, grd *grid, int cells_x, int cells_y)
     int* route;
     int visited, i;
     int ind_x, ind_y;
-    Route *block_cur, *block_start;
+    int start_x, start_y;
+    
+    Route *block_cur;
     
     visited = 0;
     if((route = calloc(tsp->dimension, sizeof(int))) == NULL)
@@ -166,8 +169,10 @@ int* map_on_route(Route*** routeblock, grd *grid, int cells_x, int cells_y)
                 goto found;
     errx(1, "Nothing found!");
 found:
-    block_start = routeblock[ind_x][ind_y];
-    block_cur = block_start;
+    start_x = ind_x;
+    start_y = ind_y;
+    
+    block_cur = routeblock[ind_x][ind_y];
     
     while(1) {
         for (i = 0; i < block_cur->trace_length; i++) {
@@ -201,7 +206,7 @@ found:
         get_next_cell(routeblock, &ind_x, &ind_y, cells_x, cells_y);
         block_cur = routeblock[ind_x][ind_y];
 
-        if (block_cur == block_start)
+        if (ind_x == start_x && ind_y == start_y)
             break;
     }    
     return route;
