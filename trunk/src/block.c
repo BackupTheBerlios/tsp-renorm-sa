@@ -106,14 +106,14 @@ create_grd(const unsigned int *length, const unsigned int *height)
 }
 
 int 
-has_city(grd *grid, int *x, int *y)
+has_city(grd *grid, int x, int y)
 {
 	assert(grid != NULL);
-	assert(*x < grid->height);
-	assert(*y < grid->length);
+	assert(x < grid->height);
+	assert(y < grid->length);
 
 	for (int i = 0; i < grid->filled_blocks; i++)
-		if (grid->block_idx[i] == ((*x * grid->height) + *y))
+		if (grid->block_idx[i] == ((x * grid->height) + y))
 			return grid->block_cty[i];
 	
 	return NO_CITY;
@@ -224,7 +224,7 @@ print_grd_points(grd *grid, FILE *f)
 					y * y_step + (_y_min + 0.5 * y_step));
 			/* Determine the logo which will represent the center of the box. 
 			 * These numbers are R codes. */
-			switch (has_city(grid, &x, &y)) {
+			switch (has_city(grid, x, y)) {
 			case NO_CITY:
 				/* pch=23 is a diamond. */
 				(void)fprintf(f, " 23\n");
