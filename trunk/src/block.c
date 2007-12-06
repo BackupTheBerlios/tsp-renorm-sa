@@ -30,6 +30,8 @@ create_grd(const unsigned int *length, const unsigned int *height)
 
 	/* Create a new grid and initialize all the values. */
 	grd *new_grd;
+	int *indices;
+	int filled_blocks = 0;
 
 	if ((new_grd = calloc(1, sizeof(grd))) == NULL)
 		errx(EX_OSERR, "Not enough memory!");
@@ -37,35 +39,86 @@ create_grd(const unsigned int *length, const unsigned int *height)
 	new_grd->length = *length;
 	new_grd->height = *height;
 
-	if ((new_grd->block = calloc(*length, sizeof(int *))) == NULL)
+	/* Search how many blocks will have to be made. */
+	if ((indices = calloc(*length * *height, sizeof(int))) == NULL)
 		errx(EX_OSERR, "Not enough memory!");
-
-	for (int i = 0; i < *length; i++) {
-		if ((new_grd->block[i] = calloc(*height, sizeof(int))) == NULL)
-			errx(EX_OSERR, "Not enough memory!");
-		for (int j = 0; j < *height; j++)
-			new_grd->block[i][j] = NO_CITY;
-	}
-
 	
+	for (int i = 0; i < (*length * *height); i++)
+		indices[i] = INIT_INDEX;
+
 	/* Compute the necessary values which will be used to index the cities. */
 	double x_step = fabs(_x_min - _x_max) / (double)(*length);
 	double y_step = fabs(_y_min - _y_max) / (double)(*height);
 
-	/* Determine for each city in which block it should be added. If multiple
-	 * cities are in one block, set the block to contain MANY_CITIES otherwise
-	 * set the block value to the city number. */
 	for (int i = 0; i < _num_cities; i++) {
 		unsigned int x = rint(floor((_rot_cities[i].x - _x_min) / x_step));
 		unsigned int y = rint(floor((_rot_cities[i].y - _y_min) / y_step));
-		if (!has_city(new_grd->block[x][y]))
-			new_grd->block[x][y] = i;
-		else
-			new_grd->block[x][y] = MANY_CITIES;
+		/* Search if the block is already counted for. */
+		int j = 0;
+		for (j = 0; j < (*length * *height); j++) 
+			if (indices[j] == ((x * *height) + y))
+				break;
+			else if (indices[j] == INIT_INDEX)
+				break;
+
+		if (indices[j] == INIT_INDEX) {
+			/* One more block will have to be allocated. */
+			filled_blocks++;
+			indices[j] = ((x * *height) + y);
+		}
+	}
+
+	/* There should be one more box in the array. */
+	filled_blocks++;
+	new_grd->filled_blocks = filled_blocks;
+
+	if ((new_grd->block_cty = calloc(filled_blocks, sizeof(int))) == NULL)
+		errx(EX_OSERR, "Not enough memory!");
+	if ((new_grd->block_idx = calloc(filled_blocks, sizeof(int))) == NULL)
+		errx(EX_OSERR, "Not enough memory!");
+	
+	for (int i = 0; i < filled_blocks; i++)
+		new_grd->block_idx[i] = INIT_INDEX;
+
+	for (int i = 0; i < _num_cities; i++) {
+		unsigned int x = rint(floor((_rot_cities[i].x - _x_min) / x_step));
+		unsigned int y = rint(floor((_rot_cities[i].y - _y_min) / y_step));
+		/* Search if the block has already an entry. */
+		int j = 0;
+		for (j = 0; j < filled_blocks; j++)  
+			if (new_grd->block_idx[j] == ((x * *height) + y)) {
+				break;
+			} else if (new_grd->block_idx[j] == INIT_INDEX) {
+				break;
+			}
+
+		if (new_grd->block_idx[j] == INIT_INDEX) {
+			/* The index has to be stored. */
+			new_grd->block_idx[j] = ((x * *height) + y);
+			new_grd->block_cty[j] = i;
+		} else if (new_grd->block_idx[j] >= 0) {
+			assert(new_grd->block_idx[j] == ((x * *height) + y));
+			new_grd->block_cty[j] = MANY_CITIES;
+		}
 	}
 
 	return new_grd;
 }
+
+int 
+has_city(grd *grid, int *x, int *y)
+{
+	assert(grid != NULL);
+	assert(*x < grid->height);
+	assert(*y < grid->length);
+
+	for (int i = 0; i < grid->filled_blocks; i++)
+		if (grid->block_idx[i] == ((*x * grid->height) + *y))
+			return grid->block_cty[i];
+	
+	return NO_CITY;
+}
+
 
 void
 print_cities(FILE *f)
@@ -81,8 +134,8 @@ free_grd(grd *grid)
 {
 	assert(grid != NULL);
 
-	for (int i = 0; i < grid->length; i++)
-		free(grid->block[i]);
+	free(grid->block_cty);
+	free(grid->block_idx);
 
 	free(grid);
 	grid = NULL;
@@ -123,8 +176,8 @@ print_grd_lines(grd *grid, FILE *f)
 	assert(grid != NULL);
 	assert(f != NULL);
 	/* Compute the necessary values which will be used to index the cities. */
-	double x_step = fabs(_x_min - _x_max) / (double)(grid->length - 1);
-	double y_step = fabs(_y_min - _y_max) / (double)(grid->height - 1);
+	double x_step = fabs(_x_min - _x_max) / (double)grid->length;
+	double y_step = fabs(_y_min - _y_max) / (double)grid->height;
 
 	/* Print the grid. At the end of each line a NA is needed to halt the line.
 	 * See for more information on this the R manual for lines(). */
@@ -162,27 +215,29 @@ print_grd_points(grd *grid, FILE *f)
 	
 	/* Print the header. */
 	(void)fprintf(f, "x y pch\n");
-	unsigned int x_i = 0;
-	unsigned int y_i;
-	for (double x = _x_min + 0.5 * x_step; x < _x_max; x += x_step) {
-		y_i = 0;
-		for (double y = _y_min + 0.5 * y_step; y < _y_max; y += y_step) {
+	
+	for (int x = 0; x < grid->length; x++) {
+		for (int y = 0; y < grid->height; y++) {
 			/* Print the coordinate of the center of a box. */
-			(void)fprintf(f, "%lf %lf", x, y);
+			(void)fprintf(f, "%lf %lf", 
+					x * x_step + (_x_min + 0.5 * x_step), 
+					y * y_step + (_y_min + 0.5 * y_step));
 			/* Determine the logo which will represent the center of the box. 
 			 * These numbers are R codes. */
-			if (has_cities(grid->block[x_i][y_i]))
-				/* pch=24 is a triangle point up. */
-				(void)fprintf(f, " 24\n");
-			else if (has_city(grid->block[x_i][y_i]))
-				/* pch=19 is a solid circle. */
-				(void)fprintf(f, " 19\n");
-			else
+			switch (has_city(grid, &x, &y)) {
+			case NO_CITY:
 				/* pch=23 is a diamond. */
 				(void)fprintf(f, " 23\n");
-			y_i++;
+				break;
+			case MANY_CITIES:
+				/* pch=24 is a triangle point up. */
+				(void)fprintf(f, " 24\n");
+				break;
+			default:
+				/* pch=19 is a solid circle. */
+				(void)fprintf(f, " 19\n");
+			}
 		}
-		x_i++;
 	}
 }
 

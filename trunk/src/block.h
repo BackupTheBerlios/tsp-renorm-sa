@@ -11,25 +11,29 @@
 /* Define the value which is returned when no city is in the block. */
 #define NO_CITY -1
 #define MANY_CITIES -2
-/* Determine if the returned value is a city. */
-#define has_city(x) ((x) != NO_CITY)
-#define has_cities(x) ((x) == MANY_CITIES)
-
+#define INIT_INDEX -3
 
 /* Sets the rotation of the blocks. */
 extern double rotation;
 
 typedef struct {
-	int **block;
+	int *block_cty;
+	int *block_idx;
+	int filled_blocks;
 	unsigned int length;
 	unsigned int height;
-	double x_marg;
-	double y_marg;
 } grd;
 
-/* */
+/* Create a sparse grid consisting of *length by *height fields. */
 grd *create_grd(const unsigned int *length, const unsigned int *height);
+/* Free a grid object. */
 void free_grd(grd *grid);
+/* 
+ * Returns NO_CITY if no city is present in the grid at (*x, *y)
+ * Returns MANY_CITIES if more than one city is present in the grid at (*x, *y)
+ * Returns the city number if one city is present in the grid at (*x, *y)
+ */
+int has_city(grd *grid, int *x, int *y);
 
 /*
  * The following two functions can be used to print the boxes which represent 
