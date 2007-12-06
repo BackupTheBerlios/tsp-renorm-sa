@@ -29,7 +29,9 @@
 */
 static double _weights[NORMAL_NODES][NORMAL_NODES];
 
+Route* _basic_start = NULL;
 Route* _shortest_routes[BORDER_NODES][BORDER_NODES][BIT_CELL_MAX];
+static int* _result;
 
 /*
  * Function which solves the Symmetric TSP by using renormalization technique
@@ -37,27 +39,41 @@ Route* _shortest_routes[BORDER_NODES][BORDER_NODES][BIT_CELL_MAX];
 int* renormalize()
 {
     int cells_x, cells_y;
-    int i, unity;
+    int t, l, unity;
     
     int start, end;
     int new_x, new_y;
-    int old_x, old_y;
-    int start_x, start_y;
     int location;
     int cells_v;
     
-    double min_x, min_y;
-    double max_x, max_y;
-    double range_x, range_y;
-    
     int ind_x, ind_y;
-    grd* grid;
-    Route ***route_new = NULL;
-    Route ***route_prev = NULL;
     
-    /* Set up grid, only for testing purposes, should call help function */
+    grd* grid;
+    
+    int size = 256;
+    Block *block_a = NULL;
+    Block *block_b = NULL;
+    
+    Block *block_new;
+    
+    int prev_is_a = 0;
+
+    int new_ind;
+    int ind_city = 0;
+    
+    Route *route;
+    
+    if ((_result = calloc(tsp->dimension, sizeof(int))) == NULL)
+        errx(EX_OSERR, "Out of memory!");
+    
+    
+    /* Set up grid */
     cells_x = 2;
     cells_y = 2;
+    if ((block_a = realloc(block_a, size * sizeof(Block))) == NULL)
+        errx(EX_OSERR, "Out of memory!");
+    if ((block_b = realloc(block_b, size * sizeof(Block))) == NULL)
+        errx(EX_OSERR, "Out of memory!");    
     
     /*
      * Renormalize space until unity is reached. The renormalization procedure 
@@ -74,210 +90,148 @@ int* renormalize()
          *(here for testing purposes)
          */
         grid = create_grd(&cells_x, &cells_y);
+        printf("Iteration\n");
         
-        /* Check if we are already at unity */
+        /* Check if we are alreadqy at unity */
         unity = 1;
-        for (ind_x = 0; ind_x < cells_x; ind_x++)
+        for (ind_x = 0; ind_x < cells_x; ind_x++) {
             for (ind_y = 0; ind_y < cells_y; ind_y++) {
                 if (has_cities(grid->block[ind_x][ind_y]))
                     unity = 0;                
             }
-        
-        /* Reserving space for the new route through the representative points*/
-        if ((route_new = calloc(cells_x / 2, sizeof(Route**))) == NULL)
-            errx(EX_OSERR, "Out of memory");
-        
-        /* For each block of four cells decide the shortest route which 
-         * visits the centers of the cell where at least one
-         * city is located
-         */
-        for (ind_x = 0; ind_x < cells_x  / 2; ind_x++)
-            if ((route_new[ind_x] = calloc(cells_y / 2, sizeof(Route*))) == NULL)
-                errx(EX_OSERR, "Out of memory");
-        
+        }
+
         /* It is the first iteration, so entry and deperature 
          * points in a block are not an issue yet
          */
-        if(cells_x < 64) {
-            for(ind_x = 0; ind_x < cells_x / 2; ind_x++) {
-                for(ind_y = 0; ind_y < cells_y / 2; ind_y++) {
-                    cells_v = bitmask(grid, ind_x * 2, ind_y * 2);
-                    if(!route_prev)
-                        route_new[ind_x][ind_y] = get_basic_route(cells_v);
-                    else {
-                        /* Get the entry and departure points in our 
-                        * new route based on the previous route
-                        */
-                        old_x = floor(ind_x / 2.0);
-                        old_y = floor(ind_y / 2.0);
-                        
-                        location = (ind_x % 2) + 2 * (ind_y % 2);
-                        
-                        //Get location and entry in array
-                        if(route_prev[old_x][old_y]) {
-                            start = route_prev[old_x][old_y]->start[location];
-                            end = route_prev[old_x][old_y]->end[location];
-                        }
-                        else {
-                            start = -1;
-                            end = -1;
-                        }
-                        
-                        if(start != -1 && end != -1) {
-                            route_new[ind_x][ind_y] = 
-                            _shortest_routes[start - CELL_NODES][end - CELL_NODES][cells_v];
-                        }
-                        else
-                            route_new[ind_x][ind_y] = NULL;
-                    }
-                }
-            }
+        if(cells_x == 2) {
+            cells_v = bitmask(grid, 0, 0);
+            block_a[0].route = get_basic_route(cells_v);
+            block_a[0].x = 0;
+            block_a[0].y = 0;
+            
+            block_a[1].route = NULL;
         }
         else {
-            //Find first spot to retrace route
-            for (ind_x = 0; ind_x < cells_x / 4; ind_x++)
-                for (ind_y = 0; ind_y < cells_y / 4; ind_y++)
-                    if (route_prev[ind_x][ind_y])
-                        goto found2;
-            errx(1, "Nothing found!");
-found2:
-            start_x = ind_x;
-            start_y = ind_y;
-            
-            while(1) {
-                for (location = 0; location < CELL_NODES; location++) {
-                    new_x = 2 * ind_x;
-                    new_y = 2 * ind_y;
+            new_ind = 0;
+            for (t = 0; t < size; t++) {
+                if(prev_is_a) {
+                    route = block_a[t].route;                    
+                    block_new = &(block_b[new_ind]);
+                }
+                else {
+                    route = block_b[t].route;                    
+                    block_new = &(block_a[new_ind]);
+                }
+
+                if(!route) {
+                    if(!unity)
+                        block_new->route = NULL;
+                    break;
+                }
+                
+                for(l = 0; l < CELL_NODES; l++) {
+                    if(prev_is_a) {
+                        new_x = 2 * block_a[t].x;
+                        new_y = 2 * block_a[t].y;
+                        
+                        block_new = &(block_b[new_ind]);
+                    }
+                    else {
+                        new_x = 2 * block_b[t].x;
+                        new_y = 2 * block_b[t].y;
+                        
+                        block_new = &(block_a[new_ind]);
+                    }
                     
+                    location = route->visits[l];
+                    if(location == -1)
+                        break;
+
                     if(location % 2)
                         new_x++;
                     if(location > 1)
                         new_y++;
-                    
+
                     cells_v = bitmask(grid, new_x * 2, new_y * 2);
                     
-                    start = route_prev[ind_x][ind_y]->start[location];
-                    end = route_prev[ind_x][ind_y]->end[location];
+                    start = route->start[location];
+                    end = route->end[location];
                     
-                    if(start != -1 && end != -1) {
-                        route_new[new_x][new_y] = 
-                        _shortest_routes[start - CELL_NODES][end - CELL_NODES][cells_v];
+                    assert(start != -1 && end != -1);
+
+                    block_new->route = 
+                    _shortest_routes[start - CELL_NODES][end - CELL_NODES][cells_v];                        
+                    block_new->x = new_x; 
+                    block_new->y = new_y;                         
+                    
+                    if(unity)
+                        map_block_on_route(block_new, grid, &ind_city);
+                    
+                    new_ind++;
+                    if(new_ind >= size) {
+                        size *= 2;
+                        if ((block_a = realloc(block_a, size * sizeof(Block))) == NULL)
+                            errx(EX_OSERR, "Out of memory!");
+                        if ((block_b = realloc(block_b, size * sizeof(Block))) == NULL)
+                            errx(EX_OSERR, "Out of memory!");
                     }
-                    else
-                        route_new[new_x][new_y] = NULL;
                 }
-                get_next_cell(route_prev, &ind_x, &ind_y, cells_x, cells_y);
-                
-                if (ind_x == start_x && ind_y == start_y) {
-                    break;
-                }
-            }    
+            }
         }
         
-        /* Store iteration */
-        char name[32];
-        sprintf(name, "/tmp/it%d", cells_x);
-        print_routes(route_new, cells_x / 2, cells_y / 2, fopen(name, "w"));
-        
-        /* Free previous route */
-        if (route_prev)
-        {
-            for (ind_x = 0; ind_x < cells_x / 4; ind_x++)
-                if (route_prev[ind_x])
-                    free(route_prev[ind_x]);
-            
-            free(route_prev);
-        }
-            
-        route_prev = route_new;
-        
-        if (unity)
-            break;
-        
+        prev_is_a = !prev_is_a;
         free_grd(grid);
         grid = NULL;
         
         cells_x *= 2;
         cells_y *= 2;
-        /* End debugging code */
-    }
+    } 
     
-    int* result = map_on_route(route_prev, grid, cells_x, cells_y);
-    free_grd(grid);
+    /* Store iteration */
+    //char name[32];
+    //sprintf(name, "/tmp/it%d", cells_x);
+    //print_routes(route_new, cells_x / 2, cells_y / 2, fopen(name, "w"));
     
-    if (route_new)
-    {
-        for (ind_x = 0; ind_x < cells_x / 2; ind_x++)
-            if (route_new[ind_x])
-                free(route_new[ind_x]);
-        
-        free(route_new);
-    }
-    
-    return result;
+    free(block_a);
+    free(block_b);
+    return _result;
 }
 
-int* map_on_route(Route*** routeblock, grd *grid, int cells_x, int cells_y)
+void map_block_on_route(Block* block, grd *grid, int *ind)
 {
-    int* route;
-    int visited, i;
-    int ind_x, ind_y;
-    int start_x, start_y;
+    int i;
+    int ind_x = block->x;
+    int ind_y = block->y;
     
-    Route *block_cur;
-    
-    visited = 0;
-    if((route = calloc(tsp->dimension, sizeof(int))) == NULL)
-        errx(EX_OSERR, "Out of memory");
-    
-    //Find first spot to retrace route
-    for (ind_x = 0; ind_x < cells_x / 2; ind_x++)
-        for (ind_y = 0; ind_y < cells_y / 2; ind_y++)
-            if (routeblock[ind_x][ind_y])
-                goto found;
-    errx(1, "Nothing found!");
-found:
-    start_x = ind_x;
-    start_y = ind_y;
-    
-    block_cur = routeblock[ind_x][ind_y];
-    
-    while(1) {
-        for (i = 0; i < block_cur->trace_length; i++) {
-            switch (block_cur->trace[i]) {
-                case NODE_CELL_TL:
-                    if(has_city(grid->block[2 * ind_x][2 * ind_y])) {
-                        route[visited] = grid->block[2 * ind_x][2 * ind_y];
-                        visited++;                       
-                    }
-                    break;
-                case NODE_CELL_TR:
-                    if(has_city(grid->block[2 * ind_x + 1][2 * ind_y])) {
-                        route[visited] = grid->block[2 * ind_x + 1][2 * ind_y];
-                        visited++;                       
-                    }
-                    break;
-                case NODE_CELL_BL:
-                    if(has_city(grid->block[2 * ind_x][2 * ind_y + 1])) {
-                        route[visited] = grid->block[2 * ind_x][2 * ind_y + 1];
-                        visited++;                       
-                    }
-                    break;
-                case NODE_CELL_BR:
-                    if(has_city(grid->block[2 * ind_x + 1][2 * ind_y + 1])) {
-                        route[visited] = grid->block[2 * ind_x + 1][2 * ind_y + 1];
-                        visited++;                       
-                    }
-                    break;
-            }
+    for (i = 0; i < block->route->trace_length; i++) {
+        switch (block->route->trace[i]) {
+            case NODE_CELL_TL:
+                if(has_city(grid->block[2 * ind_x][2 * ind_y])) {
+                    _result[*ind] = grid->block[2 * ind_x][2 * ind_y];
+                    *ind = *ind + 1;                       
+                }
+                break;
+            case NODE_CELL_TR:
+                if(has_city(grid->block[2 * ind_x + 1][2 * ind_y])) {
+                    _result[*ind] = grid->block[2 * ind_x + 1][2 * ind_y];
+                    *ind = *ind + 1;                       
+                }
+                break;
+            case NODE_CELL_BL:
+                if(has_city(grid->block[2 * ind_x][2 * ind_y + 1])) {
+                    _result[*ind] = grid->block[2 * ind_x][2 * ind_y + 1];
+                    *ind = *ind + 1;                       
+                }
+                break;
+            case NODE_CELL_BR:
+                if(has_city(grid->block[2 * ind_x + 1][2 * ind_y + 1])) {
+                    _result[*ind] = grid->block[2 * ind_x + 1][2 * ind_y + 1];
+                    *ind = *ind + 1;                       
+                }
+                break;
         }
-        get_next_cell(routeblock, &ind_x, &ind_y, cells_x, cells_y);
-        block_cur = routeblock[ind_x][ind_y];
-
-        if (ind_x == start_x && ind_y == start_y)
-            break;
-    }    
-    return route;
+    }
 }
 /*
  * Convert visited cells into a bitmask
@@ -305,74 +259,91 @@ int bitmask(grd *grid, int ind_x, int ind_y)
  */
 Route* get_basic_route(int cells)
 {
-    Route* route;
     int i;
     int previous_point = -1;
     
-    if ((route = calloc(1, sizeof(Route))) == NULL)
-        errx(EX_OSERR, "Out of memory");
+    if(!_basic_start) {
+        if ((_basic_start = calloc(1, sizeof(Route))) == NULL)
+            errx(EX_OSERR, "Out of memory!");        
+    }
+    else {
+        _basic_start->trace_length = 0;
+        _basic_start->length = 0.0;
+        
+        for (i = 0; i < CELL_NODES; i++) {
+            _basic_start->visits[i] = -1;
+            _basic_start->start[i] = -1;
+            _basic_start->end[i] = -1;
+        }
 
+        for (i = 0; i < NODES; i++)
+            _basic_start->trace[i] = -1;
+    }
+
+    
     /* Simply visit all cells and you have already the shortest path */
     if (cells & BIT_CELL_TL) {
-        route->trace[route->trace_length] = NODE_CELL_TL;
-        route->trace_length++;
+        _basic_start->trace[_basic_start->trace_length] = NODE_CELL_TL;
+        _basic_start->trace_length++;
+        
         
         previous_point = NODE_CELL_TL;
     }
     if (cells & BIT_CELL_TR) {
         if(previous_point != -1) {
-            route->trace[route->trace_length] = 
+            _basic_start->trace[_basic_start->trace_length] = 
                     point_on_edge(previous_point, NODE_CELL_TR);
-            route->trace_length++;
+            _basic_start->trace_length++;
         }
         
-        route->trace[route->trace_length] = NODE_CELL_TR;
-        route->trace_length++;
+        _basic_start->trace[_basic_start->trace_length] = NODE_CELL_TR;
+        _basic_start->trace_length++;
         
         previous_point = NODE_CELL_TR;
     }
     if (cells & BIT_CELL_BR) {
         if(previous_point != -1) {
-            route->trace[route->trace_length] = 
+            _basic_start->trace[_basic_start->trace_length] = 
                     point_on_edge(previous_point, NODE_CELL_BR);
-            route->trace_length++;
+            _basic_start->trace_length++;
         }
         
-        route->trace[route->trace_length] = NODE_CELL_BR;
-        route->trace_length++;
+        _basic_start->trace[_basic_start->trace_length] = NODE_CELL_BR;
+        _basic_start->trace_length++;
         
         previous_point = NODE_CELL_BR;
     }
     if (cells & BIT_CELL_BL) {
         if(previous_point != -1) {
-            route->trace[route->trace_length] = 
+            _basic_start->trace[_basic_start->trace_length] = 
                     point_on_edge(previous_point, NODE_CELL_BL);
-            route->trace_length++;
+            _basic_start->trace_length++;
         }
-        route->trace[route->trace_length] = NODE_CELL_BL;
-        route->trace_length++;
+        _basic_start->trace[_basic_start->trace_length] = NODE_CELL_BL;
+        _basic_start->trace_length++;
     }
     
     /*Repeat last node to close the path (If the path is longer than two) 
       and set start and endpoints in subblock*/
-    if (route->trace_length > 3) {
+    if (_basic_start->trace_length > 3) {
         previous_point = 
-           point_on_edge(route->trace[route->trace_length - 1], route->trace[0]);
+           point_on_edge(_basic_start->trace[_basic_start->trace_length - 1],
+                         _basic_start->trace[0]);
         
-        for (i = route->trace_length; i > 0; i--)
-            route->trace[i] = route->trace[i - 1];
-        route->trace_length++;
+        for (i = _basic_start->trace_length; i > 0; i--)
+            _basic_start->trace[i] = _basic_start->trace[i - 1];
+        _basic_start->trace_length++;
 
-        route->trace[0] = previous_point;
-        route->trace[route->trace_length] = previous_point;
-        route->trace_length++;
+        _basic_start->trace[0] = previous_point;
+        _basic_start->trace[_basic_start->trace_length] = previous_point;
+        _basic_start->trace_length++;
         
-        set_borderpoints_subblocks(route);
+        set_borderpoints_subblocks(_basic_start);
     }
     else {
         errx(EX_DATAERR, "Try other grid range!\n");
     }    
-    return route;
+    return _basic_start;
 }
 
 /*
@@ -480,9 +451,24 @@ void preprocess_routes()
                     set_borderpoints_subblocks(_shortest_routes[start][end][cells]);
                 }
             }
+            for (i = 0; i < path.size; i++)
+                free(path.routes[i]);
             free(path.routes);
         }
     }
+}
+
+void free_routes()
+{
+    int start, end;
+    int cells;
+
+    /*Iterate over all start and endpoints in the graph */
+    for (start = 0; start < BORDER_NODES; start++)
+        for (end = 0; end < BORDER_NODES; end++)
+            for (cells = 0; cells < BIT_CELL_MAX; cells++)
+                if (_shortest_routes[start][end][cells])
+                    free(_shortest_routes[start][end][cells]);
 }
 
 /*
@@ -492,13 +478,17 @@ void set_borderpoints_subblocks(Route* route)
 {
     int i;
     int start_cur, end_cur;
+    int visits_no = 0;
     int cell_a, cell_b;
     int has_start = 0;
     int alternative[CELL_NODES];
+    int location[CELL_NODES];
     
     if(!route)
         return;
+    
     for (i = 0; i < CELL_NODES; i++) {
+        route->visits[i] = -1;
         route->start[i] = -1;
         route->end[i] = -1;        
     }
@@ -518,27 +508,43 @@ void set_borderpoints_subblocks(Route* route)
                 route->start[cell_a] = route->trace[start_cur];
                 route->end[cell_a] = route->trace[end_cur];
 
+                location[cell_a] = visits_no;
                 alternative[cell_a] = cell_b;
+                
+                visits_no++;
             }
             else if(route->start[cell_b] == -1) {
                 route->start[cell_b] = route->trace[start_cur];
                 route->end[cell_b] = route->trace[end_cur];
                 
+                location[cell_a] = visits_no;
                 alternative[cell_b] = cell_b;
+                
+                visits_no++;
             }
             else if(alternative[cell_a]){
                 route->start[alternative[cell_a]] = route->start[cell_a];
                 route->end[alternative[cell_a]] = route->end[cell_a];
+                
+                location[alternative[cell_a]] = location[cell_a];
 
                 route->start[cell_a] = route->trace[start_cur];
                 route->end[cell_a] = route->trace[end_cur];
+
+                location[cell_a] = visits_no;
+                visits_no++;
             }
             else if(alternative[cell_b]){
                 route->start[alternative[cell_b]] = route->start[cell_b];
                 route->end[alternative[cell_b]] = route->end[cell_b];
                 
+                location[alternative[cell_b]] = location[cell_b];
+
                 route->start[cell_b] = route->trace[start_cur];
                 route->end[cell_b] = route->trace[end_cur];
+
+                location[cell_b] = visits_no;
+                visits_no++;
             }
                         
             start_cur = end_cur;
@@ -548,6 +554,9 @@ void set_borderpoints_subblocks(Route* route)
     for (i = 0; i < CELL_NODES; i++) {
         route->start[i] = convert_node(i, route->start[i]);
         route->end[i] = convert_node(i, route->end[i]);
+        
+        if(route->start[i] != -1 && route->end[i] != -1)
+            route->visits[location[i]] = i;
     }
 }
 
@@ -1081,23 +1090,23 @@ static void node_offset(int node, double *x, double *y)
         case NODE_CELL_TL:
         case NODE_CELL_TR:
         case NODE_CROSS_T:
-            *x = 0.5;
+            *y = 0.5;
             break;
         case NODE_BORDER_L:
         case NODE_BORDER_R:
         case NODE_CROSS_L:
         case NODE_CROSS_C:
         case NODE_CROSS_R:
-            *x = 1.0;
+            *y = 1.0;
             break;
         case NODE_CELL_BL:
         case NODE_CELL_BR:
         case NODE_CROSS_B:
-            *x = 1.5;
+            *y = 1.5;
             break;
         case NODE_BORDER_BL:
         case NODE_BORDER_BR:
-            *x = 2.0;
+            *y = 2.0;
             break;
     }
 }
@@ -1118,19 +1127,13 @@ void print_routes(Route*** routes, int cells_x, int cells_y, FILE *f)
             if (!routes[x][y])
                 continue;
             
-            for (t = 1; t < routes[x][y]->trace_length; t++) {
+            for (t = 0; t < routes[x][y]->trace_length; t++) {
                 node_offset(routes[x][y]->trace[t - 1], &offset_x, &offset_y);
                 prev_x = 2.0 * x + offset_x;
                 prev_y = 2.0 * y + offset_y;
-
-                node_offset(routes[x][y]->trace[t], &offset_x, &offset_y);
-                new_x = 2.0 * x + offset_x;
-                new_y = 2.0 * y + offset_y;
-                
                 (void)fprintf(f, "%lf %lf\n", prev_x, prev_y);
-                (void)fprintf(f, "%lf %lf\n", new_x, new_y);
-                (void)fprintf(f, "%lf NA\n");
             }
+            (void)fprintf(f, "NA NA\n");
         }
     }
 }

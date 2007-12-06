@@ -60,8 +60,9 @@ typedef struct {
     
     double length;
     
+    int visits[4];
     int start[4];
-    int end[4];
+    int end[4];    
 } Route;
 
 typedef struct {
@@ -69,13 +70,20 @@ typedef struct {
     int size;
 } Route_array;
 
+typedef struct {
+    Route* route;
+    int x;
+    int y;
+} Block;
+
 int* renormalize();
-int* map_on_route(Route*** routeblock, grd *grid, int cells_x, int cells_y);
+void map_block_on_route(Block* block, grd *grid, int *ind);
 
 Route* get_basic_route(int cells);
 
                      
 void preprocess_routes();
+void free_routes();
 void set_borderpoints_subblocks(Route* route);
 
 Route_array paths(int start, int end, int visited);
