@@ -90,14 +90,14 @@ int* renormalize()
          *(here for testing purposes)
          */
         grid = create_grd(&cells_x, &cells_y);
-        printf("Iteration\n");
+        printf("Iteration %d\n", cells_x);
         
         /* Check if we are alreadqy at unity */
         unity = 1;
         for (ind_x = 0; ind_x < cells_x; ind_x++) {
             for (ind_y = 0; ind_y < cells_y; ind_y++) {
-                if (has_cities(grid->block[ind_x][ind_y]))
-                    unity = 0;                
+                if (has_city(grid, ind_x, ind_y) == MANY_CITIES)
+                    unity = 0;
             }
         }
 
@@ -179,7 +179,15 @@ int* renormalize()
                 }
             }
         }
-        
+        /* Store iteration */
+/*        char name[32];
+        sprintf(name, "/tmp/it%d", cells_x);
+        FILE* f = fopen(name, "w");
+        if(prev_is_a)
+            print_routes(block_b, size, f);
+        else
+            print_routes(block_a, size, f);
+        fclose(f);*/
         prev_is_a = !prev_is_a;
         free_grd(grid);
         grid = NULL;
@@ -188,10 +196,6 @@ int* renormalize()
         cells_y *= 2;
     } 
     
-    /* Store iteration */
-    //char name[32];
-    //sprintf(name, "/tmp/it%d", cells_x);
-    //print_routes(route_new, cells_x / 2, cells_y / 2, fopen(name, "w"));
     
     free(block_a);
     free(block_b);
@@ -207,26 +211,26 @@ void map_block_on_route(Block* block, grd *grid, int *ind)
     for (i = 0; i < block->route->trace_length; i++) {
         switch (block->route->trace[i]) {
             case NODE_CELL_TL:
-                if(has_city(grid->block[2 * ind_x][2 * ind_y])) {
-                    _result[*ind] = grid->block[2 * ind_x][2 * ind_y];
+                if(has_city(grid, 2 * ind_x, 2 * ind_y) != NO_CITY) {
+                    _result[*ind] = has_city(grid, 2 * ind_x, 2 * ind_y);
                     *ind = *ind + 1;                       
                 }
                 break;
             case NODE_CELL_TR:
-                if(has_city(grid->block[2 * ind_x + 1][2 * ind_y])) {
-                    _result[*ind] = grid->block[2 * ind_x + 1][2 * ind_y];
+                if(has_city(grid, 2 * ind_x + 1, 2 * ind_y) != NO_CITY) {
+                    _result[*ind] = has_city(grid, 2 * ind_x + 1, 2 * ind_y);
                     *ind = *ind + 1;                       
                 }
                 break;
             case NODE_CELL_BL:
-                if(has_city(grid->block[2 * ind_x][2 * ind_y + 1])) {
-                    _result[*ind] = grid->block[2 * ind_x][2 * ind_y + 1];
+                if(has_city(grid, 2 * ind_x, 2 * ind_y + 1) != NO_CITY) {
+                    _result[*ind] = has_city(grid, 2 * ind_x, 2 * ind_y + 1);
                     *ind = *ind + 1;                       
                 }
                 break;
             case NODE_CELL_BR:
-                if(has_city(grid->block[2 * ind_x + 1][2 * ind_y + 1])) {
-                    _result[*ind] = grid->block[2 * ind_x + 1][2 * ind_y + 1];
+                if(has_city(grid, 2 * ind_x + 1, 2 * ind_y + 1) != NO_CITY) {
+                    _result[*ind] = has_city(grid, 2 * ind_x + 1, 2 * ind_y + 1);
                     *ind = *ind + 1;                       
                 }
                 break;
@@ -240,13 +244,13 @@ int bitmask(grd *grid, int ind_x, int ind_y)
 {
     int mask = 0;
     
-    if (has_city(grid->block[ind_x][ind_y]))
+    if (has_city(grid, ind_x, ind_y) != NO_CITY)
         mask |= BIT_CELL_TL;
-    if (has_city(grid->block[ind_x + 1][ind_y]))
+    if (has_city(grid, ind_x + 1, ind_y) != NO_CITY)
         mask |= BIT_CELL_TR;
-    if (has_city(grid->block[ind_x][ind_y + 1]))
+    if (has_city(grid, ind_x, ind_y + 1) != NO_CITY)
         mask |= BIT_CELL_BL;
-    if (has_city(grid->block[ind_x + 1][ind_y + 1]))
+    if (has_city(grid, ind_x + 1, ind_y + 1) != NO_CITY)
         mask |= BIT_CELL_BR;
     return mask;
 }
@@ -981,79 +985,85 @@ static void node_offset(int node, double *x, double *y)
     
     switch(node)
     {
+        case NODE_BORDER_TL:
+        case NODE_BORDER_L:
+        case NODE_BORDER_BL:
+            *x = -0.5;
+            break;
         case NODE_CELL_TL:
         case NODE_CELL_BL:
         case NODE_CROSS_L:
-            *x = 0.5;
-            break;
-        case NODE_BORDER_T:
-        case NODE_BORDER_B:
-        case NODE_CROSS_T:
-        case NODE_CROSS_C:
-        case NODE_CROSS_B:
-            *x = 1.0;
+            *x = -0.25;
             break;
         case NODE_CELL_TR:
         case NODE_CELL_BR:
         case NODE_CROSS_R:
-            *x = 1.5;
+            *x = 0.25;
             break;
         case NODE_BORDER_TR:
+        case NODE_BORDER_R:
         case NODE_BORDER_BR:
-            *x = 2.0;
+            *x = 0.5;
             break;
     }
 
     switch(node)
     {
+        case NODE_BORDER_TL:
+        case NODE_BORDER_T:
+        case NODE_BORDER_TR:
+            *y = -0.5;
+            break;
         case NODE_CELL_TL:
         case NODE_CELL_TR:
         case NODE_CROSS_T:
-            *y = 0.5;
-            break;
-        case NODE_BORDER_L:
-        case NODE_BORDER_R:
-        case NODE_CROSS_L:
-        case NODE_CROSS_C:
-        case NODE_CROSS_R:
-            *y = 1.0;
+            *y = -0.25;
             break;
         case NODE_CELL_BL:
         case NODE_CELL_BR:
         case NODE_CROSS_B:
-            *y = 1.5;
+            *y = 0.25;
             break;
         case NODE_BORDER_BL:
+        case NODE_BORDER_B:
         case NODE_BORDER_BR:
-            *y = 2.0;
+            *y = 0.5;
             break;
     }
 }
 
-void print_routes(Route*** routes, int cells_x, int cells_y, FILE *f)
+void print_routes(Block* blocks, int max_size, FILE *f)
 {
     double offset_x, offset_y;
-    double new_x, new_y;
-    double prev_x, prev_y;
+    double base_x, base_y;
+    double x, y;
+    double width_x, width_y;
     
-    int x, y, t;
+    Route *route;
+    
+    int t, l;
 	
+    width_x = 2.0;
+    width_y = 2.0;
+    
 	/* Print the header. */
 	(void)fprintf(f, "x y\n");
 
-	for (x = 0; x < cells_x; x++) {
-        for (y = 0; y < cells_y; y++) {
-            if (!routes[x][y])
-                continue;
-            
-            for (t = 0; t < routes[x][y]->trace_length; t++) {
-                node_offset(routes[x][y]->trace[t - 1], &offset_x, &offset_y);
-                prev_x = 2.0 * x + offset_x;
-                prev_y = 2.0 * y + offset_y;
-                (void)fprintf(f, "%lf %lf\n", prev_x, prev_y);
-            }
-            (void)fprintf(f, "NA NA\n");
+	for (t = 0; t < max_size; t++) {
+        route = blocks[t].route;
+        base_x = blocks[t].x * width_x + 0.5 * width_x;
+        base_y = blocks[t].y * width_y + 0.5 * width_y;
+
+        if(!route)
+            break;
+        
+        for (l = 0; l < route->trace_length; l++) {
+            node_offset(route->trace[l], &offset_x, &offset_y);
+            x = base_x + offset_x * width_x;
+            y = base_y + offset_y * width_y;
+            (void)fprintf(f, "%lf %lf\n", x, y);
         }
     }
+    (void)fprintf(f, "NA NA\n");
 }
 

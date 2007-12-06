@@ -101,5 +101,5 @@ int route_visits_cells(Route* route, int cells);
 void get_corresponding_cell(int point, int *cell_a, int *cell_b);
 void get_cell_index(Route* route, int start, int end, int *cell_a, int *cell_b);
 
-void print_routes(Route*** routes, int cells_x, int cells_y, FILE *f);
+void print_routes(Block* blocks, int size, FILE *f);
 #endif
