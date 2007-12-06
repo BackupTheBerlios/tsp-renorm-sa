@@ -33,7 +33,7 @@ void free_grd(grd *grid);
  * Returns MANY_CITIES if more than one city is present in the grid at (*x, *y)
  * Returns the city number if one city is present in the grid at (*x, *y)
  */
-int has_city(grd *grid, int *x, int *y);
+int has_city(grd *grid, int x, int y);
 
 /*
  * The following two functions can be used to print the boxes which represent 
