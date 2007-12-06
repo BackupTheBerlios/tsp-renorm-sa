@@ -49,57 +49,98 @@
 #define NODE_CROSS_B 16
 
 /*
- Struct for computing now shortest paths on the two by two blocks
-  - Trace are the visited nodes [0-11] 
-  - Trace_length number of nodes
-  - Length is the length of the tour
-  - Visits are the visited centrum points(Bit mask) */
-typedef struct {
-    int trace[NODES];
-    int trace_length;
-    
-    double length;
-    
-    int visits[CELL_NODES];
-    int start[CELL_NODES];
-    int end[CELL_NODES];    
+ * Struct for computing now shortest paths on the two by two blocks
+ *  - Trace are the visited nodes [0-11] 
+ *  - Trace_length number of nodes
+ *  - Length is the length of the tour
+ *  - Visits are the visited centrum points(Bit mask) 
+ */
+typedef struct
+{
+   int     trace[NODES];
+   int     trace_length;
+
+   double  length;
+
+   int     visits[CELL_NODES];
+   int     start[CELL_NODES];
+   int     end[CELL_NODES];
 } Route;
 
-typedef struct {
-    Route** routes;
-    int size;
+typedef struct
+{
+   Route **routes;
+   int     size;
 } Route_array;
 
-typedef struct {
-    Route* route;
-    int x;
-    int y;
+typedef struct
+{
+   Route  *route;
+   int     x;
+   int     y;
 } Block;
 
-int* renormalize();
-void map_block_on_route(Block* block, grd *grid, int *ind);
+/*
+ * Function which solves the Symmetric TSP by using renormalization technique
+ */
+int    *renormalize();
 
-Route* get_basic_route(int cells);
+/*
+ * Get the basic route. A basic route is a case where no entry point and 
+ * departure point are specified on the edge of the square. For each cell
+ * is specified if it needs to be visited or not using the arguments. 
+ * The basic route is a closed path connecting the selected points
+ */
+Route  *get_basic_route(int cells);
 
-                     
-void preprocess_routes();
-void free_routes();
-void set_borderpoints_subblocks(Route* route);
-
+/*
+ * Calculate all shortest routes for the default graph(See top of this file). 
+ * Here difference is made for the cells which are visited. For all 
+ * the nodes shortest paths are calculated for every possible combination of 
+ * cells which need to be visited. The visited cells are encoded using bitmasks,
+ * for making the iteration more simple.
+ */
+void    preprocess_routes();
+void    free_routes();
+/*
+ * Finds entry and departure blocks in one route block 
+ */
+void    set_borderpoints_subblocks(Route * route);
+/*
+ * Function giving all possible paths between start and end, which visit each 
+ * node maximal one time. It results a list of pointers to the found routes
+ */
 Route_array paths(int start, int end, int visited);
 
-void make_weight_matrix();
-int bitmask(grd *grid, int ind_x, int ind_y);
+/*
+ * Add a route to a route array. 
+ * Herefore the allocated size of the array is increased
+ */
+void    add_route(Route_array * array, Route * route);
 
-void add_route(Route_array *array, Route *route);
-Route* copy_route(Route* src);
+/*
+ *  Copy a route
+ */
+Route  *copy_route(Route * src);
 
-int node_in_route(int node, Route *route);
-int convert_node(int location, int global_point);
+/*
+ * Check if a specific node is in the route
+ */
+int     node_in_route(int node, Route * route);
 
-int route_visits_cells(Route* route, int cells);
-void get_corresponding_cell(int point, int *cell_a, int *cell_b);
-void get_cell_index(Route* route, int start, int end, int *cell_a, int *cell_b);
+/*
+ * Check if the route is valid and visits the cells specified in 
+ * the bitmask <cells>
+ */
+int     route_visits_cells(Route * route, int cells);
 
-void print_routes(Block* blocks, int size, FILE *f);
+void    make_weight_matrix();
+int     bitmask(grd * grid, int ind_x, int ind_y);
+int     convert_node(int location, int global_point);
+void    get_corresponding_cell(int point, int *cell_a, int *cell_b);
+void    get_cell_index(Route * route, int start, int end, int *cell_a,
+                       int *cell_b);
+void    print_routes(Block * blocks, int size, FILE * f);
+void    map_block_on_route(Block * block, grd * grid, int *ind);
+
 #endif

@@ -16,24 +16,25 @@
 /* Sets the rotation of the blocks. */
 extern double rotation;
 
-typedef struct {
-	int *block_cty;
-	int *block_idx;
-	int filled_blocks;
-	unsigned int length;
-	unsigned int height;
+typedef struct
+{
+   int    *block_cty;
+   int    *block_idx;
+   int     filled_blocks;
+   unsigned int length;
+   unsigned int height;
 } grd;
 
 /* Create a sparse grid consisting of *length by *height fields. */
-grd *create_grd(const unsigned int *length, const unsigned int *height);
+grd    *create_grd(const unsigned int *length, const unsigned int *height);
 /* Free a grid object. */
-void free_grd(grd *grid);
+void    free_grd(grd * grid);
 /* 
  * Returns NO_CITY if no city is present in the grid at (*x, *y)
  * Returns MANY_CITIES if more than one city is present in the grid at (*x, *y)
  * Returns the city number if one city is present in the grid at (*x, *y)
  */
-int has_city(grd *grid, int x, int y);
+int     has_city(grd * grid, int x, int y);
 
 /*
  * The following two functions can be used to print the boxes which represent 
@@ -59,8 +60,8 @@ int has_city(grd *grid, int x, int y);
  * # Plot the points.
  * points(points$x, points$y, pch=points$pch)
  */
-void print_grd_lines(grd *grid, FILE *f);
-void print_grd_points(grd *grid, FILE *f);
-void print_cities(FILE *f);
+void    print_grd_lines(grd * grid, FILE * f);
+void    print_grd_points(grd * grid, FILE * f);
+void    print_cities(FILE * f);
 
 #endif /* BLOCK_H */
