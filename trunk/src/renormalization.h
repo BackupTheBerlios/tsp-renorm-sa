@@ -49,11 +49,35 @@
 #define NODE_CROSS_B 16
 
 /*
- * Struct for computing now shortest paths on the two by two blocks
- *  - Trace are the visited nodes [0-11] 
- *  - Trace_length number of nodes
- *  - Length is the length of the tour
- *  - Visits are the visited centrum points(Bit mask) 
+ * Basic two by two cell. This cell has three types of points. These points are:
+ * - Border points: points on the border of the two by two cell
+ * - Cross points: Points internal in the basic cell where an edge crosses the 
+ *                 internal border
+ * 
+ * The basic cell is divided into four cells: NODE_CELL_TL, NODE_CELL_TR, 
+ *                                            NODE_CELL_BL and NODE_CELL_BR
+ * 
+ * In a picture you can see this as follows:
+ * 
+ *  [TL]------------[T]------------[TR]
+ *  |                |              |
+ *  |     (TL)      {T}    (TR)     | 
+ *  |                |              |
+ *  [L]---{L}-------{C}----{R}-----[R]
+ *  |                |              |
+ *  |     (BL)      {B}    (BR)     | 
+ *  |                |              |
+ *  [BL]------------[B]------------[BR]
+ * 
+ * Here [..] is a border point, {..} is a cross point and (..) is the node at 
+ * the center of a cell
+ *
+ * The Cell has the following information stored:
+ *  - Trace is an optimal route in the node, where each visited point is stored
+ *  - Trace_length is the length of this trace
+ *  - Length is the length of the optimal tour
+ *  - start and end are array where the reference points of the basic cells are 
+ *    stored (The start and endpoint) 
  */
 typedef struct
 {

@@ -99,7 +99,7 @@ renormalize()
       printf("Iteration %d\n", cells_x);
 
       /*
-       * Check if we are alreadqy at unity 
+       * Check if we are already at unity (At most one city in the block)
        */
       unity = 1;
       for (ind_x = 0; ind_x < cells_x; ind_x++) {
@@ -111,7 +111,7 @@ renormalize()
 
       /*
        * It is the first iteration, so entry and deperature points in a
-       * block are not an issue yet
+       * block are not an issue yet and basic route can be used
        */
       if (cells_x == 2) {
          cells_v = bitmask(grid, 0, 0);
@@ -120,9 +120,21 @@ renormalize()
          block_a[0].y = 0;
 
          block_a[1].route = NULL;
+      /*
+       * Else we have entry and departure points for the blocks
+       */
       } else {
          new_ind = 0;
+         /*
+          * The blocks are stored in a sparse way and in the order of the route
+          * So traverse the route of the previous iteration to find the entry 
+          * and departue points in the new block
+          */
          for (t = 0; t < size; t++) {
+            /*
+             * Check which array is the previous iteration, and which is the
+             * new one
+             */ 
             if (prev_is_a) {
                route = block_a[t].route;
                block_new = &(block_b[new_ind]);
@@ -131,11 +143,19 @@ renormalize()
                block_new = &(block_a[new_ind]);
             }
 
+            /*
+             * End of the route is shown by a NULL pointer in the route block
+             */
             if (!route) {
                if (!unity)
-                  block_new->route = NULL;
+                  block_new->route = NULL;//Signal end of path
                break;
             }
+            
+            /* 
+             * Traverse all visited subcells in the block of the previous 
+             * iteration
+             */
             for (l = 0; l < CELL_NODES; l++) {
                if (prev_is_a) {
                   new_x = 2 * block_a[t].x;
@@ -149,31 +169,52 @@ renormalize()
                   block_new = &(block_a[new_ind]);
                }
 
+               /*
+                * -1 is the end of the route through the block
+                */
                location = route->visits[l];
                if (location == -1)
                   break;
 
+               /*
+                * Calculate new (x, y) location
+                */
                if (location % 2)
                   new_x++;
                if (location > 1)
                   new_y++;
 
+               /*
+                * Check which subcells are visited
+                */
                cells_v = bitmask(grid, new_x * 2, new_y * 2);
 
+               /*
+                * Get the start and endpoint in this subcell
+                */
                start = route->start[location];
                end = route->end[location];
 
                assert(start != -1 && end != -1);
 
+               /*
+                * Get precomputed shortest route
+                */
                block_new->route =
                    _shortest_routes[start - CELL_NODES][end - CELL_NODES]
                    [cells_v];
                block_new->x = new_x;
                block_new->y = new_y;
 
+               /*
+                * Also store the visited cities in the last iteration
+                */
                if (unity)
                   map_block_on_route(block_new, grid, &ind_city);
 
+               /*
+                * Update index in the block, if needed increase size of array
+                */
                new_ind++;
                if (new_ind >= size) {
                   size *= 2;
@@ -198,10 +239,20 @@ renormalize()
         else
             print_routes(block_a, size, f);
         fclose(f);*/
+      /*
+       * Change previous block
+       */
       prev_is_a = !prev_is_a;
+      
+      /*
+       * Empty grid
+       */
       free_grd(grid);
       grid = NULL;
 
+      /*
+       * Increase number of cells
+       */
       cells_x *= 2;
       cells_y *= 2;
    }
@@ -470,6 +521,7 @@ preprocess_routes()
                _shortest_routes[start][end][cells] = NULL;
             else {
                _shortest_routes[start][end][cells] = copy_route(shortest);
+                
                set_borderpoints_subblocks(_shortest_routes[start][end]
                                           [cells]);
             }
@@ -481,6 +533,9 @@ preprocess_routes()
    }
 }
 
+/*
+ * Free the precalculated routes
+ */
 void
 free_routes()
 {
@@ -500,6 +555,8 @@ free_routes()
 
 /*
  * Finds entry and departure blocks in one route block
+ * These are the start and end points of routes through the subcells 
+ * of this block
  */
 void
 set_borderpoints_subblocks(Route * route)
@@ -515,22 +572,40 @@ set_borderpoints_subblocks(Route * route)
    if (!route)
       return;
 
+   /*
+    * Initialize fields
+    */
    for (i = 0; i < CELL_NODES; i++) {
       route->visits[i] = -1;
       route->start[i] = -1;
       route->end[i] = -1;
    }
+   
+   /*
+    * Walk through the total trace
+    */
    for (i = 0; i < route->trace_length; i++) {
+       /* Check if we are at the border of a cell*/
       if (route->trace[i] >= NODE_CELL_TL && route->trace[i] <= NODE_CELL_BR)
          continue;
 
+      /*
+       * Set start of route through the subcell
+       */
       if (!has_start) {
          start_cur = i;
          has_start = 1;
       } else {
+         /*
+          * Get number of the cell through which the subpath is traversing 
+          */ 
          end_cur = i;
          get_cell_index(route, start_cur, end_cur, &cell_a, &cell_b);
 
+         /*
+          * If in this subcell no path is stored, store it here by choosing
+          * the first or second subcell
+          */
          if (route->start[cell_a] == -1) {
             route->start[cell_a] = route->trace[start_cur];
             route->end[cell_a] = route->trace[end_cur];
@@ -547,6 +622,10 @@ set_borderpoints_subblocks(Route * route)
             alternative[cell_b] = cell_b;
 
             visits_no++;
+         /*
+          * Otherwise, the cell we chose in the first hand was incorrect
+          * and we need to take the alternative cell found by get_cell_index
+          */
          } else if (alternative[cell_a]) {
             route->start[alternative[cell_a]] = route->start[cell_a];
             route->end[alternative[cell_a]] = route->end[cell_a];
@@ -574,6 +653,10 @@ set_borderpoints_subblocks(Route * route)
       }
    }
 
+   /*
+    * Set borderpoints in subcells and store the order in which the subcells 
+    * are visited
+    */
    for (i = 0; i < CELL_NODES; i++) {
       route->start[i] = convert_node(i, route->start[i]);
       route->end[i] = convert_node(i, route->end[i]);
@@ -741,6 +824,7 @@ copy_route(Route * src)
    dest->length = src->length;
 
    for (i = 0; i < CELL_NODES; i++) {
+      dest->visits[i] = src->visits[i];
       dest->start[i] = src->start[i];
       dest->end[i] = src->end[i];
    }
@@ -789,19 +873,7 @@ route_visits_cells(Route * route, int cells)
 }
 
 /*
- * Check if there are extra visitable points on the edge. These points
- * are as follows:
- * incorrect picture!!!!
- * (0)------------(1)------------(2)
- * |               |              |
- * |     (8)      [12]    (9)     |
- * |               |              |
- * (3)---[13]-----[14]---[15]----(4)
- * |               |              |
- * |     (10)     [16]   (11)     |
- * |               |              |
- * (5)------------(6)------------(7)
- *
+ * Check if there are extra visitable points on the edge
  * if so return the number of the edge(12-16). Otherwise return -1;
  */
 static int
@@ -809,27 +881,37 @@ point_on_edge(int edge_start, int edge_finish)
 {
    int     swap;
 
+   /*
+    * Put smallest node in front to reduce if statements
+    */
    if (edge_start > edge_finish) {
       swap = edge_start;
       edge_start = edge_finish;
       edge_finish = swap;
    }
+   
    if (edge_start == NODE_CELL_TL && edge_finish == NODE_CELL_TR)
       return NODE_CROSS_T;
-   if (edge_start == NODE_CELL_TL && edge_finish == NODE_CELL_BL)
+   else if (edge_start == NODE_CELL_TL && edge_finish == NODE_CELL_BL)
       return NODE_CROSS_L;
-   if (edge_start == NODE_CELL_TL && edge_finish == NODE_CELL_BR)
+   else if (edge_start == NODE_CELL_TL && edge_finish == NODE_CELL_BR)
       return NODE_CROSS_C;
-   if (edge_start == NODE_CELL_TR && edge_finish == NODE_CELL_BL)
+   else if (edge_start == NODE_CELL_TR && edge_finish == NODE_CELL_BL)
       return NODE_CROSS_C;
-   if (edge_start == NODE_CELL_TR && edge_finish == NODE_CELL_BR)
+   else if (edge_start == NODE_CELL_TR && edge_finish == NODE_CELL_BR)
       return NODE_CROSS_R;
-   if (edge_start == NODE_CELL_BL && edge_finish == NODE_CELL_BR)
+   else if (edge_start == NODE_CELL_BL && edge_finish == NODE_CELL_BR)
       return NODE_CROSS_B;
 
    return -1;
 }
 
+/*
+ * Function which returns in which cell a point is located.
+ * Returns the two possible cells. If cell is not fund, -1 is used
+ * There is one exception: The point in the middle returns ANY_NODE_CELL
+ * in cell_a since this one can belong to any cell
+ */
 void
 get_corresponding_cell(int point, int *cell_a, int *cell_b)
 {
@@ -887,6 +969,9 @@ get_corresponding_cell(int point, int *cell_a, int *cell_b)
    }
 }
 
+/*
+ * Get index of the cell in which the path <start> to <end> is located
+ */
 void
 get_cell_index(Route * route, int start, int end, int *cell_a, int *cell_b)
 {
@@ -895,6 +980,9 @@ get_cell_index(Route * route, int start, int end, int *cell_a, int *cell_b)
    int     is_path;
    int     i, j;
 
+   /* 
+    * Initialize fields
+    */
    for (i = 0; i < CELL_NODES; i++) {
       start_in_cell[i] = 0;
       end_in_cell[i] = 0;
@@ -903,6 +991,10 @@ get_cell_index(Route * route, int start, int end, int *cell_a, int *cell_b)
    *cell_a = -1;
    *cell_b = -1;
 
+   
+   /*
+    * Get the cell where the start is located
+    */
    get_corresponding_cell(route->trace[start], cell_a, cell_b);
    if (*cell_a == ANY_NODE_CELL)
       for (i = 0; i < CELL_NODES; i++)
@@ -913,6 +1005,9 @@ get_cell_index(Route * route, int start, int end, int *cell_a, int *cell_b)
    if (*cell_b != -1)
       start_in_cell[*cell_b] = 1;
 
+   /*
+    * Get the cell where the endpoint is located
+    */
    get_corresponding_cell(route->trace[end], cell_a, cell_b);
    if (*cell_a == ANY_NODE_CELL)
       for (i = 0; i < CELL_NODES; i++)
@@ -926,6 +1021,11 @@ get_cell_index(Route * route, int start, int end, int *cell_a, int *cell_b)
    *cell_a = -1;
    *cell_b = -1;
 
+   /*
+    * Check for each subcell if the startpoint and endpoint is in the cell.
+    * If so, dubbelcheck if the two points are really a path (e.g no point from 
+    * another cell is lying in between). Store this in available parameter
+    */
    for (i = 0; i < CELL_NODES; i++) {
       if (start_in_cell[i] && end_in_cell[i]) {
          is_path = 1;
@@ -944,6 +1044,9 @@ get_cell_index(Route * route, int start, int end, int *cell_a, int *cell_b)
    }
 }
 
+/*
+ * Convert a node into its identity in the specified subcell
+ */
 int
 convert_node(int location, int main_node)
 {
@@ -1008,6 +1111,9 @@ convert_node(int location, int main_node)
    return main_node;
 }
 
+/*
+ * Return offset of point within subcell. Used for print to file
+ */
 static void
 node_offset(int node, double *x, double *y)
 {
@@ -1061,6 +1167,10 @@ node_offset(int node, double *x, double *y)
    }
 }
 
+/*
+ * Print the path which is inside the blocks. This is done by storing all
+ * visited points, which on connection form the path
+ */
 void
 print_routes(Block * blocks, int max_size, FILE * f)
 {
@@ -1081,6 +1191,9 @@ print_routes(Block * blocks, int max_size, FILE * f)
     */
    (void) fprintf(f, "x y\n");
 
+   /*
+    * Print the visited points
+    */
    for (t = 0; t < max_size; t++) {
       route = blocks[t].route;
       base_x = blocks[t].x * width_x + 0.5 * width_x;
@@ -1096,5 +1209,8 @@ print_routes(Block * blocks, int max_size, FILE * f)
          (void) fprintf(f, "%lf %lf\n", x, y);
       }
    }
+   /*
+    * The last point in the route
+    */
    (void) fprintf(f, "NA NA\n");
 }
