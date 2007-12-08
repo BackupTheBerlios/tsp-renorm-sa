@@ -1,6 +1,7 @@
 #ifndef BLOCK_H
 #define BLOCK_H
 
+#include <stdio.h>
 #include <math.h>
 
 #include "tsp.h"
