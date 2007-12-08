@@ -6,18 +6,12 @@
 \begin{document}
 \maketitle
 \section{Introduction}
-The Traveling Salesman Problem (TSP) is a very well known problem. The problem is deals with a traveling salesman which needs to visit a set of cities. Since time is money, he would like to take the shortest route possible. TSP is actually a quite large set of combinatorial problems. A number of TSP problems are:
-\begin{itemize}
-\item \textsc{Symmetric TSP:}  In this problem there is given a complete graph. The nodes of these graph are the cities and all cities are connected by undirectional edges. The weight of the edge is the distance between the cities. The task is now to find the shortest tour which visits all cities in the graph, using each edge at most once (Hamiltonian tour).
-\item \textsc{Euclidean TSP:}  A symmetric TSP where all the cities are specified by a point in the plain. The weight of the edges is calculated using the euclidean distance.
-\item \textsc{Asymmetric TSP:} This problem is similar to the Symmetric TSP only know the edges between the cities are connected.
-\item \textsc{Chinese Postmen Problem:} With the Chinese Postmen problem,  the requirement to find a Hamiltonian tour is somewhat relaxed. It is now allowed to visit an edge more than once.
-\end{itemize}
-The interesting aspect of the TSP problem can be found in theoretical and practical aspects. Theoretically the TSP problem is NP-hard. A NP-hard algorithm is a problem which can not easily be solved. In order to solve the problem you can not do better than simply try all possible solutions. These possible solutions can be checked in polynomial time.  One can prevent checking all possible solutions by using an algorithm which gives an approximation of the best solution.
-In practice, the TSP problem is widely used for example in designing  VLSI. Here a large number of transistors needs to be connected on a single chip.
-\newline\newline\noindent
-Many research fields focus their attention on the Traveling Salesman Problem. Disciplines as Mathematics, Physics, Biology, Artificial Intelligence and Computer Science. In this paper we will provide an approximation of the Travel Salesman Problem using the view point of Physics. We will combine two methods, real space renormalization theory and thermodynamic simulated annealing. This paper is structured as follows. The second section will explain renormalization theory. The third section will describe thermodynamic simulated annealing and how this is used in combination with the renormalization theory. The fourth section will treat the results of our method. Finally we will conclude with a short conclusion.
 \section{Renormalization Theory}
+Renormalization Theory is a deterministic approach to solving the TSP problem. The renormalization theory is originating from theoretical physics. In theoretical physics renormalization theory is used for investigating the changes of a physical system, by viewing it at different scales.
+\newline\newline\noindent
+When we are applying renormalization theory to the TSP problem, we first solve the TSP at a large scale. This solution is used recursively to solve it a smaller scale. This is repeated until the scale is small enough for retrieving a hamiltonian path connecting all cities.
+\newline\newline\noindent
+Now we summerarized the method, we go more into detail. The solving process is started by calculating the shortest path for a two by two block
 \section{Thermodynamic Simulated Annealing}
 \section{Results}
 \section{Conclusion}
