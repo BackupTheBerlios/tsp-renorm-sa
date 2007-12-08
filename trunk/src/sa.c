@@ -5,8 +5,11 @@
 #include "sa.h"
 #include "tsp.h"
 #include "renormalization.h"
-#include "block.h"
 #include "distance.h"
+
+#ifndef M_PI
+#define M_PI 3.14159265358979
+#endif
 
 static void neighbour_rot(double temp, double temp_end, double temp_init);
 
