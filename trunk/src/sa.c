@@ -1,6 +1,10 @@
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_cdf.h>
+#include <gsl/gsl_rng.h>
 
 #include "sa.h"
 #include "tsp.h"
@@ -11,87 +15,111 @@
 #define M_PI 3.14159265358979
 #endif
 
-static void neighbour_rot(double temp, double temp_end, double temp_init);
+/* Returns the Brownian motion used to change the rotation. */
+static double neighbour_rot(double temp, double temp_end, double temp_init,
+                            double bm_sigma);
+
+gsl_rng *_bm_rng;
 
 double
-thermo_sa(double initstate, double temp_end, double temp_init, double temp_sig)
+thermo_sa(double temp_init, double temp_end, double temp_sig, double initstate,
+          double bm_sigma, double k, FILE * log)
 {
-	double energy, energy_new, energy_delta, energy_variation; 
-	int *path;
-	int i;
-	double temp, temp_old;
-	double prob;
-	double rot_old, best_rot;
-	double entropy_variation;
-	double best_energy = 10000000000;
-	double route_len = 0;
-	double rotation;
+   double  energy, energy_new, energy_delta, energy_variation;
+   int    *path;
+   double  temp, temp_old;
+   double  prob;
+   double  rot_old, best_rot;
+   double  entropy_variation;
+   double  energy_best;
+   gsl_rng *acpt_rng;
+   unsigned long time = 0;
+   double  BM;
 
-	temp = temp_init;
-	rotation = initstate;
+   /*
+    * Initialize the random number generators. 
+    */
+   _bm_rng = gsl_rng_alloc(gsl_rng_taus);
+   acpt_rng = gsl_rng_alloc(gsl_rng_taus);
 
+   temp = temp_init;
+   rotation = initstate;
+
+   /*
+    * Compute the first path. 
+    */
    path = renormalize();
    energy = route_length(path, tsp->dimension);
-	warnx("Energy %lf", energy);
-	
-	entropy_variation = 0;
-	energy_variation = 0;
+   energy_best = energy;
 
+   entropy_variation = 0;
+   energy_variation = 0;
 
-	i = 1.1;
-	do {
-		temp_old = temp;
-		rot_old = rotation;
-		neighbour_rot(temp, temp_end, temp_init);
-		path = renormalize();
-		//energy_new = route_length(path, tsp->dimension);
-		route_len = route_length(path, tsp->dimension);
-		/* The cost function is too bumpy by itself. So dividing it by the
-		 * number of iterations causes it to be bumpy only at the beginning. */
-		energy_new = route_len * 1.0f / log((double)i);
-		warnx("energy_new %lf energy %lf", energy_new, energy);
-		energy_delta = energy_new - energy;
-		prob = exp(-energy_delta / temp);
+   /*
+    * Print the log headers. 
+    */
+   if (log != NULL)
+      (void) fprintf(log, "time T E_n E_v E_b S_v rb r rv bm\n");
 
-		if (drand48() < prob) {
-			if (best_energy > route_len) {
-				best_energy = route_len;
-				best_rot = rotation;
-			}
-			energy = energy_new;
-			energy_variation += energy_delta;
-		} else {
-			rotation = rot_old;
-		}
-		if (energy_delta < 0) {
-			entropy_variation -= energy_delta / temp;
-		}
+   do {
+      temp_old = temp;
+      rot_old = rotation;
+      if (log != NULL)
+         (void) fprintf(log, "%lu ", time);
 
-		if ((energy_variation >= 0) || fabs(entropy_variation) < 0.000001)  {
-			temp = temp_init;
-		} else {
-			warnx("Set energy_var %lf  entropy_var %lf temp_old %lf new temp %lf", energy_variation, entropy_variation, temp,i * (-energy_variation / entropy_variation));
-			temp = i * (energy_variation / entropy_variation);
-		}
-		i++;
-		warnx("temp %lf temp_old %lf energy_new %lf energy_delta %lf energy_variation %lf",
-				temp, temp_old, energy_new, energy_delta, energy_variation);
-		warnx("entropy_variation %lf prob %lf rot %lf best %lf best rot %lf",
-				entropy_variation, prob, rotation, best_energy, best_rot);
-	} while ((temp > temp_end) || (fabs(temp - temp_old) > temp_sig));
+      BM = neighbour_rot(temp, temp_end, temp_init, bm_sigma);
+      path = renormalize();
+      energy_new = route_length(path, tsp->dimension);
+      energy_delta = energy_new - energy;
 
-	return best_energy;
+      prob = exp(-energy_delta / temp);
+
+      if (log != NULL)
+         (void) fputs("*", stdout);
+      (void) fprintf(log, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
+                     temp, energy_new, energy_variation, energy_best,
+                     entropy_variation, best_rot, rotation,
+                     (rotation - rot_old), BM);
+
+      if (gsl_rng_uniform(acpt_rng) < prob) {
+         if (energy_best > energy) {
+            energy_best = energy;
+            best_rot = rotation;
+         }
+         energy = energy_new;
+         energy_variation += energy_delta;
+      } else
+         rotation = rot_old;
+
+      if (energy_delta > 0)
+         entropy_variation -= energy_delta / temp;
+
+      if ((energy_variation >= 0) || fabs(entropy_variation) < 0.000001)
+         temp = temp_init;
+      else {
+         temp = k * (energy_variation / entropy_variation);
+         rotation = best_rot;
+      }
+      time++;
+   } while ((temp > temp_end) || (fabs(temp - temp_old) > temp_sig));
+
+   gsl_rng_free(acpt_rng);
+   gsl_rng_free(_bm_rng);
+
+   return energy_best;
 }
 
-void
-neighbour_rot(double temp, double temp_end, double temp_init)
+double
+neighbour_rot(double temp, double temp_end, double temp_init, double bm_sigma)
 {
-	const double rot_min = 0.01 * M_PI;
-	const double rot_max = 2 * M_PI;
+   const double BM_start = 2 * M_PI;
 
-	const double rot_lim = rot_min + (rot_max - rot_min) / 
-		(temp_init - temp_end) * (temp - temp_end);
+   const double BM = BM_start *
+       exp(bm_sigma * (temp - temp_end) /
+           (temp_init - temp_end) *
+           gsl_cdf_gaussian_Pinv(gsl_rng_uniform(_bm_rng), 1));
 
-	rotation = rot_lim * drand48();
+   rotation = fmod(fabs(rotation + BM), 2 * M_PI);
+
+   return BM;
 }
-
