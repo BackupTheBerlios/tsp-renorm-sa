@@ -39,6 +39,12 @@ route_length(const int *route, int num_cities)
       height = city_curr->y - city_nxt->y;
       route_lngth += sqrt(length * length + height * height);
    }
+   city_curr = &tsp->cities[route[tsp->dimension - 1]];
+   city_nxt = &tsp->cities[route[0]];
 
+   length = city_curr->x - city_nxt->x;
+   height = city_curr->y - city_nxt->y;
+   route_lngth += sqrt(length * length + height * height);   
+   
    return route_lngth;
 }
