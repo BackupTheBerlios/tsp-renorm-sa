@@ -26,27 +26,60 @@ int
 main(int argc, char *argv[])
 {
    char    ch, *ep;
-   int     iters = 0;
+	double  bm_sigma = 0.2, temp_end = 1, temp_init = 100, init_state = 0;
+	double  k = 0;
    FILE   *toimport = NULL;
+	FILE	 *log = NULL;
 
-   while ((ch = getopt(argc, argv, "f:i:?h")) != -1)
+   while ((ch = getopt(argc, argv, "f:i:s:e:b:k:l:?h")) != -1)
       switch (ch) {
+      case 'l':
+         if ((log = fopen(optarg, "w")) == NULL)
+            errx(EX_DATAERR, "Unable to open file %s", optarg);
+         break;
       case 'f':
          if ((toimport = fopen(optarg, "r")) == NULL)
             errx(EX_DATAERR, "Unable to open file %s", optarg);
          break;
       case 'i':
-         if ((iters = (int) strtol(optarg, &ep, 10)) <= 0)
+         if ((init_state = strtod(optarg, &ep)) < 0)
+            usage();
+			init_state = fmod(init_state, 2 * M_PI);
+         break;
+		case 's':
+         if ((bm_sigma = strtod(optarg, &ep)) <= 0)
             usage();
          break;
-      case '?':
+		case 'e':
+         if ((temp_end = strtod(optarg, &ep)) <= 0)
+            usage();
+         break;
+  		case 'b':
+         if ((temp_init = strtod(optarg, &ep)) <= 0)
+            usage();
+         break;
+  		case 'k':
+         if ((k = strtod(optarg, &ep)) <= 0)
+            usage();
+         break;
+		case '?':
       case 'h':
       default:
          usage();
       }
 
-   if (toimport == NULL)
+   if (toimport == NULL) {
+		warnx("No import file!");
       usage();
+	}
+	if (temp_end > temp_init) {
+		warnx("The end temperature must be smaller than the begin temperature.");
+		usage();
+	}
+
+	warnx("Start solving with initial state %1.4lf begin temp %04.2lf \
+end temp %04.2lf Brownian motion sigma %lf", init_state, temp_init, temp_end, 
+		bm_sigma);
 
    argc -= optind;
    argv += optind;
@@ -55,15 +88,11 @@ main(int argc, char *argv[])
    tsp = import_tsp(toimport);
    preprocess_routes();
    fclose(toimport);
-   //rotation = 1.275337;
-   //int* cities = renormalize();
 
-	thermo_sa(0.06 * M_PI, 0.01, 2500, 0.0001);
-	
-	//for (rotation = -0.01 * M_PI; rotation < M_PI; rotation += 0.01 * M_PI) {
-      //int* cities = renormalize();
-      //printf("%f %f\n", rotation, route_length(cities, tsp->dimension));        
-   //}
+	double energy = thermo_sa(temp_init, temp_end, 0.01, init_state, bm_sigma, 
+			k, log);
+	warnx("Best energy found %lf", energy);
+	fclose(log);
 
    return EX_OK;
 }
@@ -72,11 +101,20 @@ static void
 usage(void)
 {
    (void) fprintf(stderr,
-                  "usage tsp -f [filename] -i [number of iterations]\n");
-   (void) fprintf(stderr, "-f [filename]              The filename from which \
+                  "usage tsp -f [filename] -i [initstate] -s [BM sigma] \
+-e [end temp] -b [begin temp] -l [log file]\n");
+   (void) fprintf(stderr, "-f [filename]    The filename from which \
 the distances should be loaded.\n");
-   (void) fprintf(stderr, "-i [number of iterations]  The number of iterations \
-which should be used to compute the shortest path.\n");
+   (void) fprintf(stderr, "-l [log file]    The filename where the \
+TSA info should be stored in.\n");
+   (void) fprintf(stderr, "-i [init state]  The inital state of TSA \
+(default 0)\n");
+   (void) fprintf(stderr, "-s [BM sigma]    The sigma of the Brownian \
+motion (default 0.2)\n");
+   (void) fprintf(stderr, "-b [begin temp]  The begin temperature \
+of the TSA (default 100)\n");
+   (void) fprintf(stderr, "-e [end temp]    The end temperature \
+of the TSA (default 1)\n");
    (void) fprintf(stderr, "\n");
    (void) fprintf(stderr, "Travelling salesman solver version %s.\n", VERSION);
    (void) fprintf(stderr, "Report bugs to %s.\n", PACKAGE_BUGREPORT);
