@@ -21,7 +21,7 @@ import_tsp(FILE * file)
    char   *suc;
 
    if ((result = calloc(1, sizeof(Tsp))) == NULL)
-      errx(stderr, "Out of memory\n");
+      errx(EX_OSERR, "Out of memory\n");
 
    assert(file != NULL);
 

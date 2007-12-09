@@ -10,8 +10,8 @@ print_path(unsigned int *path, FILE * f)
    assert(path != NULL);
    assert(f != NULL);
 
-   (void) sprintf(f, "x y\n");
+   (void) fprintf(f, "x y\n");
    for (int i = 0; i < tsp->dimension; i++)
-      (void) sprintf(f, "%lf %lf\n", tsp->cities[path[i]].x,
+      (void) fprintf(f, "%lf %lf\n", tsp->cities[path[i]].x,
                      tsp->cities[path[i]].y);
 }

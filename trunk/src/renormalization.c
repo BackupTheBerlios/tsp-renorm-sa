@@ -42,7 +42,7 @@ static int *_result;
 int    *
 renormalize()
 {
-   int     cells_x, cells_y;
+   unsigned int     cells_x, cells_y;
    int     t, l, unity;
 
    int     start, end;
@@ -96,7 +96,7 @@ renormalize()
        * (here for testing purposes)
        */
       grid = create_grd(&cells_x, &cells_y);
-      printf("Iteration %d\n", cells_x);
+      //printf("Iteration %d\n", cells_x);
 
       /*
        * Check if we are already at unity (At most one city in the block)
@@ -420,7 +420,7 @@ void
 make_weight_matrix()
 {
    int     i, j;
-   //Initialize default on zero
+   /* Initialize default on zero. */
    for (i = 0; i < NORMAL_NODES; i++)
       for (j = 0; j < NORMAL_NODES; j++)
          _weights[i][j] = 0.0;

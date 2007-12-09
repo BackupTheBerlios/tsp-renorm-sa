@@ -11,6 +11,8 @@
 #include "io.h"
 #include "distance.h"
 #include "block.h"
+#include "tsp.h"
+#include "sa.h"
 #include <config.h>
 
 /*
@@ -23,7 +25,7 @@ Tsp    *tsp;
 int
 main(int argc, char *argv[])
 {
-   char    ch, ep;
+   char    ch, *ep;
    int     iters = 0;
    FILE   *toimport = NULL;
 
@@ -49,38 +51,18 @@ main(int argc, char *argv[])
    argc -= optind;
    argv += optind;
 
+	/* Load and initialize the tsp data set for the renormalization. */
    tsp = import_tsp(toimport);
-   // fclose(toimport);
-   rotation = 0;
-   unsigned int length = 10;
-   unsigned int height = 10;
-   grd    *grid;
-   grid = create_grd(&length, &height);
-   FILE   *cities = fopen("cities", "w");
-   print_cities(cities);
-   FILE   *grid_lines = fopen("lines", "w");
-   print_grd_lines(grid, grid_lines);
-   FILE   *grid_points = fopen("points", "w");
-   print_grd_points(grid, grid_points);
+   preprocess_routes();
+   fclose(toimport);
+   //rotation = 1.275337;
+   //int* cities = renormalize();
 
-   rotation = -0.5 * M_PI;
-   create_grd(&length, &height);
-
-   rotation = 0.5 * M_PI;
-   create_grd(&length, &height);
-
-   fclose(cities);
-   fclose(grid_lines);
-   fclose(grid_points);
-
-//      rotation = -0.5 * M_PI;
-   rotation = 0.5 * 3.14;
-//      rotation = 0;
-   //preprocess_routes();
-
-   //for (rotation = 0; rotation < 6.28; rotation += 0.314) {
-   //   int* cities = renormalize();
-   //  printf("[%f]Length of tour is %f\n", rotation, route_length(cities, tsp->dimension));        
+	thermo_sa(0.06 * M_PI, 0.01, 2500, 0.0001);
+	
+	//for (rotation = -0.01 * M_PI; rotation < M_PI; rotation += 0.01 * M_PI) {
+      //int* cities = renormalize();
+      //printf("%f %f\n", rotation, route_length(cities, tsp->dimension));        
    //}
 
    return EX_OK;
