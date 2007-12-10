@@ -51,6 +51,7 @@ thermo_sa(double temp_init, double temp_end, double temp_sig, double initstate,
     */
    path = renormalize();
    energy = route_length(path, tsp->dimension);
+	free(path);
    energy_best = energy;
 
    entropy_variation = 0;
@@ -74,6 +75,7 @@ thermo_sa(double temp_init, double temp_end, double temp_sig, double initstate,
           errx(EX_DATAERR, "Rotation can not be NaN");
       path = renormalize();
       energy_new = route_length(path, tsp->dimension);
+		free(path);
       energy_delta = energy_new - energy;
 
       prob = exp(-energy_delta / temp);
