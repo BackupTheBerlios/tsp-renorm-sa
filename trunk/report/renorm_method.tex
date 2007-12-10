@@ -3,68 +3,31 @@
 		figure]{c}{\tnote[]{}}{\FL
 			\includegraphics[scale=0.2]{fig/ising.png}
 		\LL}
-The heart of our method for solving the TSP problem is the renormalization
-theory. The renormalization theory is originating from theoretical physics. In
-theoretical physics renormalization is used to study the observe the changes
-in a physical system. The changes are observed by looking to the problem at
-different scales. This idea is illustrated in figure \ref{fig:scales}.
+The heart of our method for solving the TSP problem is the renormalization theory. The Renormalization Theory is originating from theoretical physics. In theoretical physics Renormalization is used to study the observe the changes in a physical system. The changes are observed by looking to the problem at different scales. This idea is illustrated in figure \ref{fig:scales}. Here the problem is divided into four parts initially. These parts on their own can again be divided into four parts. This dividing process is repeated until the scale is small enough to study the original problem.
 
+This idea is mapped onto the Traveling Salesman problem. The total square in figure \ref{fig:scales} can be seen as the total area where the cities are located. When estimating the shortest route, we start at a large scale, and we keep zooming in until our estimated optimal tour is known. The procedure is illustrated in figure \ref{fig:renormalization}. The image A is the basic block. This basic block consists of four cells, and can be seen as the four parts in which we divide the problem when we go to a smaller scale. A cell spans a part of the area, and can be enabled or not. The cell is enabled (e.g. needs to be visited) if one or more cities are located in the area spanned by the cell.
 
-This idea is mapped onto the Traveling Salesman problem. The total square in
-figure \ref{fig:scales} can be seen as the total area where the cities are
-located. When estimating the shortest route, we start at a large scale, and we
-keep zooming in until our estimated path visiting all cities is known. The
-procedure is illustrated in figure 
-%\ref{fig:renormalization}. 
-The image on the
-topleft of the figure is the basic block. This basic block consists of four
-cells. A cell represents a virtual city, available if one or more cities are
-within the cell. The general idea of the algorithm is to solve the Traveling
-Salesman problem for the larger block. This can be done easily, because a
-Traveling Salesman problem for at most four cities can be easily solved, by
-simply enumerating all possibilities. Then this block can be divided into four
-subblocks. Together with some information acquired from the larger block, the
-Traveling Salesman problem can again be solved for the four subblocks. This
-process is repeated until there is at most one city in a cell, and the
-estimated route is known. In the following subsection we will describes the
-steps in the algorithm in more detail.
+The general idea of the algorithm is to solve the Traveling Salesman problem for the larger block. This can be done easily, since a Traveling Salesman problem for at most four cities can be easily solved without much performance penalty, by simply enumerating all possibilities. When this is done, we can look to the TSP at a smaller scale, by dividing the block into four subblocks. Together with some information acquired from the larger block, the Traveling Salesman problem can again be solved for the four subblocks. This process is repeated until there is at most one city in a cell, and the estimated optimal tour is known. In the following subsection we will describes the algorithm in more detail.
 
 \subsection{Preprocessing step}
-\ctable[caption={The basic two by two cell},
+\ctable[caption={An illustration of how the Renormalization algorithm works},
 	label={fig:basiccell},
-	figure]{c}{\tnote[]{The open circles are the border points, the closed circles
-		are the centre of the cells and the crosses are additional places where an
-		edge crosses the border of a cell}}{\FL
+	figure]{c}{\tnote[]{
+	(A) Determine the optimal route in a basic two by two cell. The dashed lines are the edges which can be traversed. The open circles are border points and the closed circles are cell points.\\
+	(B) Based on the starting and end border node in a block, lookup the optimal path visiting the cells where at least one city is located.\\
+	(C) Divide the block into four subblocks, use the crossings of the route with the borders of a cell (The X) as new starting and end nodes.\\
+	(D) These subblocks are treated as a block again, and the process restarts from picture B. This dividing continues until at most one city is in each cell.}}{\FL
 	\includegraphics[width=7cm]{fig/renormalization.pdf}
 	\LL}
 
-The preprocessing step prevents the performance penalty each time you need to
-calculate an optimal route in a block. Basically this means that for every
-possible configuration you calculate the optimal path. There are two aspects
-which can be altered, the border point at which the route is started and the
-visited cells.
+The preprocessing step reduces the amount of calculation needed each time you need to calculate an optimal route in a block. Basically this means that for every possible configuration you calculate the optimal path, and store this in a lookup table. There are two aspects which can be altered, the border point at which the beginning and finish of the route is located and the visited cells within the block.
 
-For retrieving the shortest route through a block, it is considered as a
-graph. The nodes are the border points and the cell points (Lying in the
-centrum of a cell). The nodes are connected by multiple Before treating on the
-algorithm the preprocessing is considered.  The preprocessing consists of
-calculating all shortest paths in the basic blocks. Here all possible subsets
-of cells that needs to be visited are considered.
-
-The basic block can be treated as a graph, the border points and the cell
-points are the nodes. There are edges between the border points and their
-closest cell point(s). The cell points are also connected with an edge with
-the other cell points. This set-up can be seen in the topleft picture of
-figure %\ref{fig:renormalization}. 
-For getting the shortest route, a breadth
-first search is used. Here all possible paths, without cycles, between the
-starting and end node are calculated. Using these set of paths, the shortest
-routes visiting subsets of cell points are searched.
+For retrieving the shortest route through a block, it is considered as a graph. The nodes are the border points and the cell points (Lying in the centrum of a cell). The nodes are connected by multiple edges. There are edges between the border points and the closest cell points. There are also edges from a cell point to the other edges. This set-up can be seen in figure \ref{fig:renormalization}A. For getting the shortest route, a breadth first search is used. Here all possible paths, without cycles, between the starting and end node are calculated. Using these set of paths, the shortest routes visiting subsets of cell points are searched.
 
 \subsection{First iteration}
-\subsection{Further iterations}
-\subsection{Retrieving the estimate of the shortest tour}
+In the first iteration we start with one block with four cells. In such a block a subset of at least 3 cells needs to be occupied to form a starting tour. The cells where at least one city is located, are connected to form a shortest tour. This tour is an easy connection of the cities, and all the possible routes between them do not need to be investigated.
 
+\subsection{Further iterations}
 \ctable[caption={The first four iterations on d198.tsp},
 		label={fig:iterations},
 		width=7.5cm,
@@ -75,39 +38,23 @@ routes visiting subsets of cell points are searched.
 			\includegraphics[width=3.5cm]{fig/it16.pdf} 
 			\LL}
 
-For finding the shortest route we do not treat all cities independently, but
-we first try to solve the problem at the largest scale. For doing this we
-divide the square into a block of a two by two cells. Within these cells we
-take the average behavior. In case of the Traveling Salesman problem, we look
-if there is a city within the cell or not. Now we decide the shortest route
-for this two by two cell which visits all the cells where a city is located.
 
-This basic two by two cell can be seen in figure \ref{fig:basiccell}. We
-still need to solve the Traveling Salesman Problem on this smaller block. This
-block however, is small enough to compute the shortest path with reasonable
-performance. The renormalization method, needs to solve the TSP on this basic
-cells repeatedly. For that reason all possible shortest paths are
-precalculated. This means that from every possible route through the basic
-block, the shortest path is calculated. This shortest path is calculated for
-every possible combination of cells which needs to be visited.
+When the first iteration is finished we can use earlier blocks to calculate an approximation of the shortest tour at a smaller scale. We can divide all the blocks in four subblocks to study the problem at a smaller scale. Instead of iterating over all the subblocks in the image, which can be quite time consuming at a very small scale, only the blocks which are contains at least one city in the previous estimated shortest tour are used in the calculation. This limits the needed memory in the order of the size of the problem.
 
-When we solved the problem at a specific scale, we zoom in further. This means
-that the blocks used in the current scale are divide in four subblocks, each
-consist four cells. The route which we calculated in the previous block, can
-now be used for calculating the shortest path through each of these subblocks.
-For this we determine the cross points of the used edges in the shortest route
+The information which is retrieved from the previous scale are the crossing points of the previous optimal path through the block. This optimal path can be seen in figure \ref{fig:renormalization}B.  These crossing points are at the places, where the edges of the path, pass the borders of one of the cells. This is illustrated in figure \ref{fig:renormalization}C. These crossing points, precalculated during the preprocessing stage, are used as start and ending point in the subblock. The optimal path between the starting and endpoint is retrieved, and placed in the subblock. The subblock is now a block on its own again, and can be used in the next scale.
 
-Renormalization Theory is a deterministic approach to solving the TSP problem.
-The renormalization theory is originating from theoretical physics. In
-theoretical physics renormalization theory is used for investigating the
-changes of a physical system, by viewing it at different scales.
+\subsection{Retrieving the estimate of the shortest tour}
+These process, which looks like zooming in on a microscope, is repeated until we reach unity. Unity is defined as the case where each cell has at most one city in it. Now we can directly retrieve our estimation of the shortest path. In figure \ref{fig:iterations} the first four iterations of the algorithm on $d198.tsp$ is shown. What is clear from this picture is that the route is refined in each iteration, until it exactly maps on the estimation  of the shortest optimal tour.
 
-When we are applying renormalization theory to the TSP problem, we first solve
-the TSP at a large scale. This solution is used recursively to solve it a
-smaller scale. This is repeated until the scale is small enough for retrieving
-a hamiltonian path connecting all cities.
+\subsection{Parallelization}
+This algorithm can be extended for parallel execution. We did not perform this extension, but we have a suggestion of how to do this. The foundation for parallelism is in the observation that if we decrease to a smaller scale, we divide all the blocks into four subblocks independently. So if the code needs to be parallelized you take the following steps:
 
-Now we summerarized the method, we go more into detail. The solving process is
-started by calculating the shortest path for a two by two block...
+\begin{enumerate}
+\item First perform some iterations on a single process. This is done until there are sufficient number of blocks for all the processes
+\item Distribute the blocks over the processes, each process should have one connected part of the tour.
+\item Each process can now recursively divide these blocks into subblocks, until unity is reached.
+\item The cities which are visited in the part of a single process are retrieved and send back to the initiating process. These one can collect the data and output the total tour.
+\end{enumerate}
 
+This approach has a high potential of parallelism, since no communication is needed. Their is a pitfall however. If the blocks are shared equally it does not have to mean that the work is equally divided. In a worst case scenario a small group of processes can have a large set of all the cities. This problem can be reduced if there is a process which performs load balancing by shifting blocks, or sending one small set of blocks to a process at the time.
 % vim:ft=tex:spell spelllang=en:autoindent
