@@ -1,6 +1,9 @@
 \ctable[caption={Studying a problem at multiple scales},
 		label={fig:scales},
-		figure]{c}{\tnote[]{}}{\FL
+		figure]{c}{\tnote[]{Generic idea of renormalization. You start at the 
+		largest scale where you solve the problem. The you divide this 
+		square in four subblocks, where you repeat the same process for each
+		 of the subblocks until you reach unity.}}{\FL
 			\includegraphics[scale=0.2]{fig/ising.png}
 		\LL}
 The heart of our method for solving the TSP problem is the renormalization theory. The Renormalization Theory is originating from theoretical physics. In theoretical physics Renormalization is used to study the observe the changes in a physical system. The changes are observed by looking to the problem at different scales. This idea is illustrated in figure \ref{fig:scales}. Here the problem is divided into four parts initially. These parts on their own can again be divided into four parts. This dividing process is repeated until the scale is small enough to study the original problem.
@@ -31,7 +34,9 @@ In the first iteration we start with one block with four cells. In such a block 
 \ctable[caption={The first four iterations on d198.tsp},
 		label={fig:iterations},
 		width=7.5cm,
-		figure]{cc}{\tnote[]{Some comments}}{\FL
+		figure]{cc}{\tnote[]{The renormalization starts with a basic form, a 
+		square or a triangle. This slowly refines to the real tour through the 
+		cities}}{\FL
 			\includegraphics[width=3.5cm]{fig/it2.pdf} &
 			\includegraphics[width=3.5cm]{fig/it4.pdf} \NN
 			\includegraphics[width=3.5cm]{fig/it8.pdf} &
