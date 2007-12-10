@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
+#include <sysexits.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_rng.h>
@@ -68,6 +69,9 @@ thermo_sa(double temp_init, double temp_end, double temp_sig, double initstate,
          (void) fprintf(log, "%lu ", time);
 
       BM = neighbour_rot(temp, temp_end, temp_init, bm_sigma);
+
+      if(fpclassify(rotation) == FP_NAN)
+          errx(EX_DATAERR, "Rotation can not be NaN");
       path = renormalize();
       energy_new = route_length(path, tsp->dimension);
       energy_delta = energy_new - energy;
@@ -114,11 +118,12 @@ neighbour_rot(double temp, double temp_end, double temp_init, double bm_sigma)
 {
    const double BM_start = 2 * M_PI;
 
-   const double BM = BM_start *
-       exp(bm_sigma * (temp - temp_end) /
-           (temp_init - temp_end) *
+    double BM = BM_start *
+       exp((bm_sigma * (temp - temp_end) /
+           (temp_init - temp_end)) *
            gsl_cdf_gaussian_Pinv(gsl_rng_uniform(_bm_rng), 1));
-
+    if(fpclassify(BM) == FP_INFINITE)
+        BM = gsl_cdf_gaussian_Pinv(gsl_rng_uniform(_bm_rng), 1) * 2 * M_PI;
    rotation = fmod(fabs(rotation + BM), 2 * M_PI);
 
    return BM;
