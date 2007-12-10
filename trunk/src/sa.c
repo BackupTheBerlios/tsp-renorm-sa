@@ -81,8 +81,7 @@ thermo_sa(double temp_init, double temp_end, double temp_sig, double initstate,
       prob = exp(-energy_delta / temp);
 
       if (log != NULL)
-         (void) fputs("*", stdout);
-      (void) fprintf(log, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
+			(void)fprintf(log, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
 							temp, energy_new, energy_delta, energy_variation,
 							energy_best, entropy_variation, best_rot, rotation,
                      (rotation - rot_old), BM);
@@ -121,9 +120,9 @@ neighbour_rot(double temp, double temp_end, double temp_init, double bm_sigma)
    const double BM_start = 2 * M_PI;
 
     double BM = BM_start *
-       exp((bm_sigma * (temp - temp_end) /
+       (bm_sigma * (temp - temp_end) /
            (temp_init - temp_end)) *
-           gsl_cdf_gaussian_Pinv(gsl_rng_uniform(_bm_rng), 1));
+           gsl_cdf_gaussian_Pinv(gsl_rng_uniform(_bm_rng), 1);
    if (isinf(BM))
         BM = MAXFLOAT;
 
