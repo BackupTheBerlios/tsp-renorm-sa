@@ -65,39 +65,88 @@ angle of rotation $\theta_t$ at time $t$ to be:
 \end{equation}
 where $T_{init}, T_{end}$ and $T$ are respectively the initial temperature of
 the system, the desired end temperature and the current temperature. The
-factor $\beta$ is used to determine how much the rotation should be influenced
+factor $\alpha$ is used to determine how much the rotation should be influenced
 by the Brownian motion. The Brownian motion is multiplied by $2\pi$ to ensure
 that an entire rotation can be accomplished.
 
 \ctable[caption={The rotation at various times},
 	     figure,
-		  label={fig:rot}]{c}{\tnote[]{}}{\FL
+		  label={fig:rotful}]{c}{\tnote[]{}}{\FL
 		  \includegraphics[width=7cm]{fig/rotation_full}\NN
-		  \includegraphics[width=7cm]{fig/rotation_400-600}\NN
-		  \includegraphics[width=7cm]{fig/rotation_1930-1998}
-		  \LL}
+		  \includegraphics[width=7cm]{fig/temp_rot_full}\LL
+		  }
 
-In Fig. \ref{fig:rot} the behaviour of the rotation is showed over time. As
-can be seen in the upper sub figure the 
+\ctable[caption={The rotation at various times},
+	     figure,
+		  label={fig:rot46}]{c}{\tnote[]{}}{\FL
+		  \includegraphics[width=7cm]{fig/rotation_400-600}\NN
+		  \includegraphics[width=7cm]{fig/temp_rot_400-600}\LL
+		  }
+\ctable[caption={The rotation at various times},
+	     figure,
+		  label={fig:rot19}]{c}{\tnote[]{}}{\FL
+		  \includegraphics[width=7cm]{fig/rotation_1930-1998}\NN
+		  \includegraphics[width=7cm]{fig/temp_rot_1930-1998}\LL
+		  }
+
+In Fig. \ref{fig:rotful}, \ref{fig:rot46}~and \ref{fig:rot19}~the angle and
+the temperature and different times is shown. The overall behaviour of the
+angle over time can be seen in Fig. \ref{fig:rotful}. Equation \ref{eq:rot}~
+causes the angle to behave randomly. At the beginning of the process, where
+the temperature is very high, the process is very instable. This changes when
+the temperature lowers. As can be seen if \ref{fig:rot46} the process seems to
+`walk around' 1.2 radials. This is pure randomness. As can be seen inf Fig.
+\ref{fig:rot19}~the temperature finally cools down to a minimum the movement
+of the Brownian Motion also diminishes.
+
+Perturbing the system using a Brownian Motion which influence is reduced as
+the system cools, allows to jump to other angles.
 
 \subsection{Cooling Schedule}
-In the classical simulated annealing algorithm a cooling schedule has to be
+In the classical simulated annealing algorithm the cooling schedule has to be
 fine tuned to solve each problem. However, because the renormalization
-algorithm is supposed to be general purpose fine tuning every problem is
-undesirable. Therefore a auto-tuning cooling schedule is more sensible.  The
-thermodynamic simulated annealing algorithm proposed in
-\cite{devicente2003pts}~proposes a cooling schedule which uses the energy
+algorithm is supposed to be general purpose, we argue that fine tuning every
+problem is undesirable. Therefore a auto-tuning cooling schedule is more
+sensible. The thermodynamic simulated annealing algorithm proposed in
+\cite{devicente2003pts}~implements a cooling schedule which uses the energy
 variance and the entropy variance of the system to find a new temperature. 
 
 \subsubsection{Energy}
 As previously discussed the energy of the system is defined to be the length
 of the route as found by the renormalization process. While attempting to
-lower the temperature the new energy is used to
+lower the temperature the system seeks states with a lower energy. These
+states are found by perturbing the current state. When a state has a lower
+energy it is accepted when
+\begin{equation}\label{eq:accept}
+X < e^{-\Delta E / T}
+\end{equation}
+where $\Delta E$ is the difference between the current energy and the last
+energy, $T$ is the current temperature and $X\sim N(0, 1)$. When a state is
+accepted the energy change is added to the total energy variance $E_\sigma$.
+Cooling the system increases the total energy variance.
 
+\subsubsection{Entropy}
+Entropy is known in field of Physics and Information Theory. In both cases it
+describes the notion of inconsistency of the current state. When the system is
+at a very high temperature, --in the metallurgy analogue-- the atoms are very
+unstable. When the energy and the temperature reduce the atoms will become
+more stable and therefore the entropy will fall. The total entropy variance
+$S_\sigma$ of the system is computed as:
+\begin{equation}\label{eq:entropy}
+S_\sigma = S_\sigma - \frac{\Delta E}{T}
+\end{equation}
+Together with the energy the entropy is used to adjust the temperature of the
+system.
 
-
-
-
+\subsubsection{Temperature}
+When the total energy variance is large and the total entropy variance is low
+the temperature can be cooled more quickly. This is reflected in a temperature
+adjustment:
+\begin{equation}\label{eq:tempadj}
+T = \beta\frac{E_\sigma}{S_\sigma}
+\end{equation}
+with a adjustment factor $\beta$. This factor permits to control how long the
+system stays in disequilibrium. 
 
 
 % vim:ft=tex:spell spelllang=en:autoindent
