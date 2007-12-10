@@ -164,7 +164,7 @@ rotate(void)
    /*
     * It the old rotation is the same nothing has to be done. 
     */
-   if (_rotation != FP_NAN && _rotation == rotation)
+   if (_rot_cities != NULL && _rotation == rotation)
       return;
 
    /*
