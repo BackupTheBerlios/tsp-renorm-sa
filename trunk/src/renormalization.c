@@ -188,6 +188,13 @@ renormalize()
                 * Check which subcells are visited
                 */
                cells_v = bitmask(grid, new_x * 2, new_y * 2);
+               
+               /*
+                * If there are no cities in the block it is useless to go to 
+                * a smaller scale for this block
+                */
+               if(!cells_v)
+                   continue;
 
                /*
                 * Get the start and endpoint in this subcell
