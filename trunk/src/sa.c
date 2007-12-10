@@ -122,8 +122,9 @@ neighbour_rot(double temp, double temp_end, double temp_init, double bm_sigma)
        exp((bm_sigma * (temp - temp_end) /
            (temp_init - temp_end)) *
            gsl_cdf_gaussian_Pinv(gsl_rng_uniform(_bm_rng), 1));
-    if(fpclassify(BM) == FP_INFINITE)
-        BM = gsl_cdf_gaussian_Pinv(gsl_rng_uniform(_bm_rng), 1) * 2 * M_PI;
+   if (isinf(BM))
+        BM = MAXFLOAT;
+
    rotation = fmod(fabs(rotation + BM), 2 * M_PI);
 
    return BM;
