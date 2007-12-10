@@ -89,7 +89,7 @@ thermo_sa(double temp_init, double temp_end, double temp_sig, double initstate,
       if (gsl_rng_uniform(acpt_rng) < prob) {
          if (energy_best > energy) {
             energy_best = energy;
-            best_rot = rotation;
+            best_rot = rot_old;
          }
          energy = energy_new;
          energy_variation += energy_delta;
@@ -103,7 +103,7 @@ thermo_sa(double temp_init, double temp_end, double temp_sig, double initstate,
          temp = temp_init;
       else {
          temp = k * (energy_variation / entropy_variation);
-         rotation = best_rot;
+         //rotation = best_rot;
       }
       time++;
    } while ((temp > temp_end) || (fabs(temp - temp_old) > temp_sig));
