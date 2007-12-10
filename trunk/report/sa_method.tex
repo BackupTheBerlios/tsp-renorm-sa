@@ -139,15 +139,28 @@ Together with the energy the entropy is used to adjust the temperature of the
 system.
 
 \subsubsection{Temperature}
-When the total energy variance is large and the total entropy variance is low
-the temperature can be cooled more quickly. This is reflected in a temperature
-adjustment:
+As long as the total energy is positive or the total entropy variance is zero
+the system is reheated to the initial temperature. Once the total energy
+variance drops below zero the temperature is adjusted as:
 \begin{equation}\label{eq:tempadj}
 T = \beta\frac{E_\sigma}{S_\sigma}
 \end{equation}
 with a adjustment factor $\beta$. This factor permits to control how long the
 system stays in disequilibrium. 
 
+\subsection{Conclusion}
+Solving the TSP using renormalization can lead to inaccurate results. This is
+caused by the distribution of the cities over the grid. To improve the
+distribution of the cities over the grid the grid is rotated. The angle under
+which the rotation finds place which leads to the shortest route is searched
+using a probabilistic algorithm. 
+
+By using a simulated annealing process the optimal angle is found by first
+heating the system. A stochastic process is used to keep the system in
+disequilibrium while the system is warm. Once a steady state is found the
+temperature is slowly cooled using an auto-adjustment algorithm.
+
+It remains to be verified that using this method leads to shorter paths.
 
 % vim:ft=tex:spell spelllang=en:autoindent
 
