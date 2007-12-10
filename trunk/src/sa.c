@@ -60,7 +60,7 @@ thermo_sa(double temp_init, double temp_end, double temp_sig, double initstate,
     * Print the log headers. 
     */
    if (log != NULL)
-      (void) fprintf(log, "time T E_n E_v E_b S_v rb r rv bm\n");
+      (void) fprintf(log, "time T E_n E_d E_v E_b S_v rb r rv bm\n");
 
    do {
       temp_old = temp;
@@ -80,9 +80,9 @@ thermo_sa(double temp_init, double temp_end, double temp_sig, double initstate,
 
       if (log != NULL)
          (void) fputs("*", stdout);
-      (void) fprintf(log, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
-                     temp, energy_new, energy_variation, energy_best,
-                     entropy_variation, best_rot, rotation,
+      (void) fprintf(log, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf\n",
+							temp, energy_new, energy_delta, energy_variation,
+							energy_best, entropy_variation, best_rot, rotation,
                      (rotation - rot_old), BM);
 
       if (gsl_rng_uniform(acpt_rng) < prob) {
