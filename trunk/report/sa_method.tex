@@ -17,30 +17,31 @@ first seeking through the entire sample space multiple optima can be found.
 Depending on the algorithm used one or more optima are further analyzed to
 find a global optimum.
 
-The thermodynamic simulated annealing algorithm \cite{devicente2003pts}~is the
-probabilistic algorithm used in this work. This process is an extension of the
-simulated annealing algorithm first discussed in \cite{kirkpatrick83}. The
-latter algorithm is analogous to the process of annealing in metallurgy. First
-a metal is heated to high temperature. Once warm it is slowly cooled in a
-controlled way permitting the atoms of the metal to fall into an optimal
-equilibrium and thereby reducing the energy to a minimum. Because the atoms
-are in an optimal place the metal has many ideal properties. 
+The thermodynamic simulated annealing (TSA) algorithm
+\cite{devicente2003pts}~is the probabilistic algorithm used in this work. This
+process is an extension of the simulated annealing (SA) algorithm first
+discussed in \cite{kirkpatrick83}. The latter algorithm is analogous to the
+process of annealing in metallurgy. First a metal is heated to high
+temperature. Once warm it is slowly cooled in a controlled way permitting the
+atoms of the metal to fall into an optimal equilibrium and thereby reducing
+the energy to a minimum. Because the atoms are in an optimal place the metal
+has many ideal properties. 
 
-To use simulated annealing first some properties of the system have to be
-defined to resemble the physical process. The energy of the system is defined
-to be the length of the route found by the renormalization process. The sample
-space which can be altered to reduce the energy is the angle of the rotation of the grid.
-The two core elements of the simulated annealing process are the cooling
-schedule which permits to reduce the energy of the system. The second is the
-method used to bring the system in a new disequilibrium. This latter property,
-to which will be referred to as the perturbation function, models the dynamic of
-the atoms depending of the temperature of the system.
+To use SA first some properties of the system have to be defined to resemble
+the physical process. The energy of the system is defined to be the length of
+the route found by the renormalization process. The sample space which can be
+altered to reduce the energy is the angle of the rotation of the grid.  The
+two core elements of the SA process are the cooling schedule which permits to
+reduce the energy of the system. The second is the method used to bring the
+system in a new disequilibrium. This latter property, to which will be
+referred to as the perturbation function, models the dynamic of the atoms
+depending of the temperature of the system.
 
 The next subsections treat the perturbation function and the cooling schedule used
 to find the optimal angle of the rotation.
 
 \subsection{Perturbation function}
-In most simulated annealing algorithms the system is brought in a new
+In most SA algorithms the system is brought in a new
 disequilibrium by changing the current state by a small fraction. This is hard
 to accomplish when rotating the grid used by the renormalization algorithm;
 even a very small change of the angle of the rotation can lead to a complete
@@ -69,24 +70,28 @@ factor $\alpha$ is used to determine how much the rotation should be influenced
 by the Brownian motion. The Brownian motion is multiplied by $2\pi$ to ensure
 that an entire rotation can be accomplished.
 
-\ctable[caption={The rotation at various times},
+\ctable[caption={The rotation angle over the entire TSA process},
 	     figure,
-		  label={fig:rotful}]{c}{\tnote[]{}}{\FL
-		  \includegraphics[width=7cm]{fig/rotation_full}\NN
-		  \includegraphics[width=7cm]{fig/temp_rot_full}\LL
+		  label={fig:rotful}]{c}{\tnote[]{The angle is changed using equation
+		  \eqref{eq:rot}. Because the temperature remains around the initial
+		  level throughout almost the entire time the rotation changes
+		  frequently.}}{\FL
+		  \includegraphics[width=8cm]{fig/rotation_full}\NN
+		  \includegraphics[width=8cm]{fig/temp_rot_full}\LL
 		  }
 
-\ctable[caption={The rotation at various times},
+\ctable[caption={The rotation angle over the time period of 400 to 600},
 	     figure,
-		  label={fig:rot46}]{c}{\tnote[]{}}{\FL
-		  \includegraphics[width=7cm]{fig/rotation_400-600}\NN
-		  \includegraphics[width=7cm]{fig/temp_rot_400-600}\LL
+		  label={fig:rot46}]{c}{\tnote[]{The figure shows that while the
+		  temperature is high the change of the rotation angle  }}{\FL
+		  \includegraphics[width=8cm]{fig/rotation_400-600}\NN
+		  \includegraphics[width=8cm]{fig/temp_rot_400-600}\LL
 		  }
-\ctable[caption={The rotation at various times},
+\ctable[caption={The rotation angle towards the end of the TSA process},
 	     figure,
 		  label={fig:rot19}]{c}{\tnote[]{}}{\FL
-		  \includegraphics[width=7cm]{fig/rotation_1930-1998}\NN
-		  \includegraphics[width=7cm]{fig/temp_rot_1930-1998}\LL
+		  \includegraphics[width=8cm]{fig/rotation_1930-1998}\NN
+		  \includegraphics[width=8cm]{fig/temp_rot_1930-1998}\LL
 		  }
 
 In Fig. \ref{fig:rotful}, \ref{fig:rot46}~and \ref{fig:rot19}~the angle and
@@ -103,13 +108,13 @@ Perturbing the system using a Brownian Motion which influence is reduced as
 the system cools, allows to jump to other angles.
 
 \subsection{Cooling Schedule}
-In the classical simulated annealing algorithm the cooling schedule has to be
-fine tuned to solve each problem. However, because the renormalization
-algorithm is supposed to be general purpose, we argue that fine tuning every
-problem is undesirable. Therefore a auto-tuning cooling schedule is more
-sensible. The thermodynamic simulated annealing algorithm proposed in
-\cite{devicente2003pts}~implements a cooling schedule which uses the energy
-variance and the entropy variance of the system to find a new temperature. 
+In the classical SA algorithm the cooling schedule has to be fine tuned to
+solve each problem. However, because the renormalization algorithm is supposed
+to be general purpose, we argue that fine tuning every problem is undesirable.
+Therefore a auto-tuning cooling schedule is more sensible. The TSA algorithm
+proposed in \cite{devicente2003pts}~implements a cooling schedule which uses
+the energy variance and the entropy variance of the system to find a new
+temperature. 
 
 \subsubsection{Energy}
 As previously discussed the energy of the system is defined to be the length
@@ -155,7 +160,7 @@ distribution of the cities over the grid the grid is rotated. The angle under
 which the rotation finds place which leads to the shortest route is searched
 using a probabilistic algorithm. 
 
-By using a simulated annealing process the optimal angle is found by first
+By using a TSA process the optimal angle is found by first
 heating the system. A stochastic process is used to keep the system in
 disequilibrium while the system is warm. Once a steady state is found the
 temperature is slowly cooled using an auto-adjustment algorithm.
