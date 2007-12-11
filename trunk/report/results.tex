@@ -1,9 +1,9 @@
 \section{Results}
-To demonstrate the potency of our approach we have solved the TSP for multiple
-data sets. We compare the optimal results to the results found using the
-combination of renormalization and TSA. To analyze the quality
-of the proposed technique the state of the system while seeking the solution
-for two different data sets is compared.
+To demonstrate the potency of our approach we have solved the TSP problem for
+multiple data sets. We compare the optimal results to the results found using
+the combination of renormalization and TSA. To analyze the quality of the
+proposed technique the state of the system while seeking the solution for two
+different data sets is compared.
 
 \subsection{Overall Results}
 The shortest route for multiple problems was computed to demonstrate the
@@ -26,8 +26,14 @@ TSA also partly undoes the computational benefit obtained by using renormalizati
 \ctable[caption={The results found compared to the shortest route for various
 	numbers of cities},
 		 label={fig:results},
-		 figure]{c}{}{\FL
-		 \includegraphics[width=7cm]{fig/results}
+		 figure]{c}{\tnote[]{This figure shows the quality of the results found
+		 using the renormalization process combined with the TSA.\\
+		 The circles show the approximation error when not using TSA. The dark
+		 dots show the optimal value found using TSA. The triangles denote the
+		 worse solution found during the TSA process.\\
+		 It can be concluded that using TSA improves the results
+		 considerably.}}{\FL 
+		 \includegraphics[width=8cm]{fig/results}
 		 \LL}
 
 \subsection{Two data sets compared}
@@ -87,13 +93,17 @@ auto-adjusting schedule used by the TSA.
 
 \ctable[caption={The location of the cities in the 198 cities problem},
 		 label={fig:d198},
-		 figure]{c}{}{\FL
+		 figure]{c}{\tnote[]{This figure shows how 198 cities are distributed
+		 over the entire pane. The interesting feature of this problem is that
+		 the cities are concentrated in clusters.}}{\FL
 		 \includegraphics[width=7cm]{fig/d198cities}
 		 \LL}
 
 \ctable[caption={The location of the cities in the 575 cities problem},
 		 label={fig:rat575},
-		 figure]{c}{}{\FL
+		 figure]{c}{\tnote[]{This figure shows how 575 cities are distributed
+		 over the entire pane. An aspect of this data set is that the cities are
+		 distributed almost uniformly over the pane.}}{\FL
 		 \includegraphics[width=7cm]{fig/rat575cities}
 		 \LL}
 
@@ -102,7 +112,15 @@ auto-adjusting schedule used by the TSA.
 		connecting 198 cities},
 		label={fig:res198},
 		figure,
-		star]{c}{}{\FL
+		star]{c}{\tnote[]{These graphs show the state of the TSA process which
+		searches the optimal rotation angle for the cities displayed in figure
+		\ref{fig:d198}. The first figure shows the amount of energy present in
+		the system. The second displays the temperature. The third the found
+		rotation angle. The last shows the shortest route found until a point in
+		time.\\
+		Because the energy in the system approaches zero at the end of the
+		process the system is in equilibrium. The equilibrium is found at an
+		angle of 0.9258 $\pi$ radian.}}{\FL
 		\includegraphics[width=15cm]{fig/d198energy}\NN
 		\includegraphics[width=15cm]{fig/d198temp}\NN
 		\includegraphics[width=15cm]{fig/d198rotation}\NN
@@ -112,12 +130,21 @@ auto-adjusting schedule used by the TSA.
 		connecting 575 cities},
 		label={fig:res575},
 		figure,
-		star]{c}{}{\FL
+		star]{c}{\tnote[]{These graphs show the state of the TSA process which
+		searches the optimal rotation angle for the cities displayed in figure
+		\ref{fig:d198}. The first figure shows the amount of energy present in
+		the system. The second displays the temperature. The third the found
+		rotation angle. The last shows the shortest route found until a point in
+		time.\\
+		In the upper figure can be seen that the TSA is unable to find a state
+		where the temperature and the energy are low. This undesirable state
+		leads to a rotation angle of 0.0112 $\pi$ radian which defers
+		considerably from the optimal result 2.3126 $\pi$ radian.
+		}}{\FL
 		\includegraphics[width=15cm]{fig/rat575energy}\NN
 		\includegraphics[width=15cm]{fig/rat575temp}\NN
 		\includegraphics[width=15cm]{fig/rat575rotation}\NN
 		\includegraphics[width=15cm]{fig/rat575shortest}\LL}
-
 
 % vim:ft=tex:spell spelllang=en:autoindent
 
