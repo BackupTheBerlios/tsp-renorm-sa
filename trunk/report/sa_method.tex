@@ -1,7 +1,7 @@
 \subsection{Introduction}
 According to \cite{yoshiyuki1995nms} the renormalization algorithm works best
 when the cities are uniformly distributed over the pane. It is clear that this
-is very unlikely in real TSP optimisation problems. For the United States of
+is very unlikely in real TSP problem optimisation problems. For the United States of
 America for example most cities are located on the east coast. The Netherlands
 on the other hand have a concentration of cities in the west of the country.
 It is clear that the location of the cities cannot be changed without
@@ -75,7 +75,8 @@ that an entire rotation can be accomplished.
 		  label={fig:rotful}]{c}{\tnote[]{The angle is changed using equation
 		  \eqref{eq:rot}. Because the temperature remains around the initial
 		  level throughout almost the entire time the rotation changes
-		  frequently.}}{\FL
+		  frequently.\\
+		  The samples are taken from a TSA process on 657 cities.}}{\FL
 		  \includegraphics[width=8cm]{fig/rotation_full}\NN
 		  \includegraphics[width=8cm]{fig/temp_rot_full}\LL
 		  }
@@ -83,13 +84,19 @@ that an entire rotation can be accomplished.
 \ctable[caption={The rotation angle over the time period of 400 to 600},
 	     figure,
 		  label={fig:rot46}]{c}{\tnote[]{The figure shows that while the
-		  temperature is high the change of the rotation angle  }}{\FL
+		  temperature is high the change of the rotation angle shows a rocky
+		  pattern. This is exactly the change caused by the Brownian motion.\\
+		  The sample is a detail of the sample in Fig. \ref{fig:rotful}.
+		  }}{\FL
 		  \includegraphics[width=8cm]{fig/rotation_400-600}\NN
 		  \includegraphics[width=8cm]{fig/temp_rot_400-600}\LL
 		  }
 \ctable[caption={The rotation angle towards the end of the TSA process},
 	     figure,
-		  label={fig:rot19}]{c}{\tnote[]{}}{\FL
+		  label={fig:rot19}]{c}{\tnote[]{At the end of the TSA process the
+		  temperatures falls leading to a low rotation change.\\
+		  The sample is a detail of the sample in Fig. \ref{fig:rotful}.
+		  }}{\FL
 		  \includegraphics[width=8cm]{fig/rotation_1930-1998}\NN
 		  \includegraphics[width=8cm]{fig/temp_rot_1930-1998}\LL
 		  }
@@ -154,7 +161,7 @@ with a adjustment factor $\beta$. This factor permits to control how long the
 system stays in disequilibrium. 
 
 \subsection{Conclusion}
-Solving the TSP using renormalization can lead to inaccurate results. This is
+Solving the TSP problem using renormalization can lead to inaccurate results. This is
 caused by the distribution of the cities over the grid. To improve the
 distribution of the cities over the grid the grid is rotated. The angle under
 which the rotation finds place which leads to the shortest route is searched
