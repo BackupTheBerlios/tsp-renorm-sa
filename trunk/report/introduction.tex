@@ -1,53 +1,53 @@
 \section{Introduction}
-The Traveling Salesman Problem (TSP) is a very well known problem. The problem
-deals with a traveling salesman which needs to visit a set of cities. Since
-time is money, he would like to take the shortest route possible, but still
-visit all cities. This is a simple definition, but TSP is actually a quite
-large set of combinatorial problems. Examples types of  TSP problems are:
-
+\IEEEPARstart{T}{he} Traveling Sales Person (TSP) problem is a very well known
+problem first proposed around 1800 by Sir William Rowan Hamilton and Thomas
+Penyngton Kirkman. The problem deals with a traveling salesman which needs to
+visit a number of cities. Since time is money, he would like to take the
+shortest route possible, but still visit all cities. This is a simple
+definition, but TSP is actually a quite large set of combinatorial problems.
+Examples of TSP problems are:
 \begin{itemize}
-\item \textsc{Symmetric TSP:}  In this problem there is given a complete graph.
+\item \textsc{Symmetric TSP problem:}  In this problem there is given a complete graph.
 The nodes of these graph are the cities and all cities are connected by
-undirectional edges. The weight of the edge is the distance between the cities.
+unidirectional edges. The weight of the edge is the distance between the cities.
 The task is now to find the shortest tour which visits all cities in the graph,
 using each edge at most once (Hamiltonian tour). This tour has to end at the
 starting city.
-\item \textsc{Euclidean TSP:}  Euclidean TSP is a subset of the Symmetric TSP.
-Here all the cities are specified by a point in the plane. The weight of the
-edges is calculated using the euclidean distance. It is now again the task to
-find the shortest hamiltonian tour.
-\item \textsc{Asymmetric TSP:} This TSP problem is related to the Symmetric
-TSP. In this case we do not have a complete graph and the edges between the
-cities are directed.
+\item \textsc{Euclidean TSP:}  Euclidean TSP problem is a subset of the
+Symmetric TSP problem.  Here all the cities are specified by a point in the
+plane. The weight of the edges is calculated using the euclidean distance. It
+is now again the task to find the shortest Hamiltonian tour.
+\item \textsc{Asymmetric TSP problem:} This TSP problem is related to the
+Symmetric TSP. In this case we do not have a complete graph and the edges
+between the cities are directed.
 \item \textsc{Chinese Postmen Problem:} With the Chinese Postmen problem,  the
 requirement to find a Hamiltonian tour is somewhat relaxed. It is now allowed
 to visit an edge more than once.
 \end{itemize}
 
-The interesting aspect of the TSP problem can be found in theoretical and
-practical aspects. Theoretically the TSP problem is NP-hard. A NP-hard
-algorithm is a problem which can not easily be solved. In order to solve the
-problem you can not do better than simply try all possible solutions. These
-possible solutions can be checked in polynomial time.  One can prevent checking
-all possible solutions by using an algorithm which gives an approximation of
-the best solution.
+The TSP problem is interesting from a theoretical aspect as well as from a
+practical aspect. Theoretically the TSP problem is NP-hard i.e. it can not be
+solved easily. In order to find the optimal solution for the problem all the
+possible solutions have to be analyzed. Which can be done in polynomial time.
+Better approaches exist to solving a TSP problem, however, the algorithms
+which can be used only do an approximation.
 
-In practice, the TSP problem is widely used for example in designing  VLSI.
-VLSI is an abbreviation of very large scale integration where a very large
-number of components needs to be integrated on a single chip.
+Due to the quantity of problems which resemble the TSP problem many attempts
+have been made to find the optimal solution. Algorithms which mimic processes
+in various disciplines have been used. Examples of such processes are ant
+colonies, genetic mutation, neural networks, etc. 
 
-Many research fields focus their attention on the Traveling Salesman Problem.
-Disciplines as Mathematics, Physics, Biology, Artificial Intelligence and
-Computer Science. Each field provides their own unique insight into the
-problem. In this paper we will investigate some interesting approaches from
-physics. Here two methods have drawn our attention. These approaches are Real
-Space Renormalization Theory and Thermodynamic Simulated Annealing. 
+Real space renormalization, a technique from the field of theoretical physics,
+has been put forward as a fast approximation technique of the shortest route.
+However, this technique relies heavily on the distribution of the cities in
+the TSP problem. In this paper we analyze if simulated annealing, a process
+which has its analogy from the field of metallurgy, can improve the results
+found by renormalization.
 
-This paper is structured as follows. The second section will explain
-Renormalization Theory. The third section will describe Thermodynamic Simulated
-Annealing and how this is used in combination with the Renormalization Theory.
-The fourth section will treat the results of our method. Finally we will
-conclude with a short conclusion.
+This paper is structured as follows. The next section delves deeper in the two
+algorithms and motivates the combination. The third section treats the results
+found. The last section concludes this work.
+\IEEEpubidadjcol % needed for the copyright notice
 % vim:ft=tex:spell spelllang=en:autoindent
 
 

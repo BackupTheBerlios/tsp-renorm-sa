@@ -61,7 +61,7 @@ approach less accurate as the number of cities increases, the deterioration is
 only 0.0180 \% per city.
 
 TSA allows to find a shorter route for all the problem sets. However the
-approximation becomes less accurate as the number of cities increase. 
+approximation becomes less accurate as the number of cities increases. 
 
 \ctable[caption={The results found compared to the shortest route for various
 	numbers of cities},
@@ -96,11 +96,14 @@ approximation becomes less accurate as the number of cities increase.
 
 
 \subsection{Two data sets compared}
-To show that the TSA process increases the computing time considerably we
-analyze the dynamics of the system while solving two data sets. The first data
-set contains 198 cities which are concentrated in a few clusters, see Fig.
-\ref{fig:d198}. In contrast, the second data set which contains 575 cities is
-much more uniformly distributed, see Fig. \ref{fig:rat575}.
+The motivation to use TSA with renormalization is that the distribution of the
+cities over the pane is of importance to the accuracy of the solution found by
+renormalization. However, the distribution of the cities over the pane
+influences also the TSA. To demonstrate this the TSA process is observed
+while solving two TSP problems. The first problem set consists of
+198 cities and consists mainly of clusters (see Fig. \ref{fig:d198}), the
+second problem set consists of almost uniformly distributed cities (see Fig.
+\ref{fig:rat575}).
 
 The dynamics of the TSA process while solving both problems are showed in Fig.
 \ref{fig:res198}~for 198 cities and in Fig. \ref{fig:res575}~for 575 cities.

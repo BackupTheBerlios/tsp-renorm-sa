@@ -57,10 +57,10 @@ a stochastic process $\lbrace W_t\rbrace_{t\geq 0}$ with the properties that
 if $\mathcal{F}_t$ denotes the information known until time $t$ then 
 $\expt(W_{t + 1}\mid \mathcal{F}_t) = W_t$ i.e. the
 expectation of process at the next time step is only dependent on the
-information known up to the current time. However the expectation is still
-zero. Furthermore, $W_t - W_s \sim N(0, t - s)$ i.e. the increment between two
-time steps is normally distributed with a mean 0 and variance $t - s$. Using
-this process we define the angle of rotation $\theta_t$ at time $t$ to be:
+information known up to the current time. Furthermore, $W_t - W_s \sim N(0, t
+- s)$ i.e. the increment between two time steps is normally distributed with a
+mean 0 and variance $t - s$. Using this process we define the angle of
+rotation $\theta_t$ at time $t$ to be: 
 \begin{equation}\label{eq:rot}
 \theta_{t + 1} = \theta_{t} + \alpha 2\pi\frac{T - T_{end}}
 	{T_{init} - T_{end}}W_t
@@ -68,8 +68,9 @@ this process we define the angle of rotation $\theta_t$ at time $t$ to be:
 where $T_{init}, T_{end}$ and $T$ are respectively the initial temperature of
 the system, the desired end temperature and the current temperature. The
 factor $\alpha$ is used to determine how much the rotation should be influenced
-by the Brownian motion. The Brownian motion is multiplied by $2\pi$ to ensure
-that an entire rotation can be accomplished.
+by the Brownian motion. From this point forward this variable will be referred
+to as the perturbation sensitivity. The Brownian motion is multiplied by
+$2\pi$ to ensure that an entire rotation can be accomplished.
 
 \ctable[caption={The rotation angle over the entire TSA process},
 	     figure,
