@@ -40,14 +40,14 @@ depending of the temperature of the system.
 The next subsections treat the perturbation function and the cooling schedule used
 to find the optimal angle of the rotation.
 
-\subsection{Perturbation function}
-In most SA algorithms the system is brought in a new
-disequilibrium by changing the current state by a small fraction. This is hard
-to accomplish when rotating the grid used by the renormalization algorithm;
-even a very small change of the angle of the rotation can lead to a complete
-new route with a much higher or lower energy. Yet if the perturbation function
-allows to return in the previously better state this is not a problem. To
-implement this behaviour the perturbation function uses a random walk.
+\subsection{Perturbation function}\label{sec:per}
+In most SA algorithms the system is brought in a new disequilibrium by
+changing the current state by a small fraction. This is hard to accomplish
+when rotating the grid used by the renormalization algorithm; even a very
+small change of the angle of the rotation can lead to a complete new route
+with a much higher or lower energy. Yet if the perturbation function allows to
+return in the previously better state this is not a problem. To implement this
+behaviour the perturbation function uses a random walk.
 
 \newcommand{\expt}{\ensuremath{\mathbb{E}}}
 The random walk used is based on a Brownian motion\cite{brown1829bam}. The
@@ -55,11 +55,12 @@ Brownian motion is used, among others, in physics to describe the random
 movement of particles suspended in a fluid. The Brownian motion is
 a stochastic process $\lbrace W_t\rbrace_{t\geq 0}$ with the properties that
 if $\mathcal{F}_t$ denotes the information known until time $t$ then 
-$\expt(W_{t + 1}\mid \mathcal{F}_t) = \expt(W_t \mid \mathcal{F}_t)$ i.e. the
+$\expt(W_{t + 1}\mid \mathcal{F}_t) = W_t$ i.e. the
 expectation of process at the next time step is only dependent on the
 information known up to the current time. However the expectation is still
-zero. Furthermore, $W_t - W_s \sim N(0, 1)$. Using this process we define the
-angle of rotation $\theta_t$ at time $t$ to be:
+zero. Furthermore, $W_t - W_s \sim N(0, t - s)$ i.e. the increment between two
+time steps is normally distributed with a mean 0 and variance $t - s$. Using
+this process we define the angle of rotation $\theta_t$ at time $t$ to be:
 \begin{equation}\label{eq:rot}
 \theta_{t + 1} = \theta_{t} + \alpha 2\pi\frac{T - T_{end}}
 	{T_{init} - T_{end}}W_t
@@ -150,7 +151,7 @@ S_\sigma = S_\sigma - \frac{\Delta E}{T}
 Together with the energy the entropy is used to adjust the temperature of the
 system.
 
-\subsubsection{Temperature}
+\subsubsection{Temperature}\label{sec:temp}
 As long as the total energy is positive or the total entropy variance is zero
 the system is reheated to the initial temperature. Once the total energy
 variance drops below zero the temperature is adjusted as:
@@ -172,7 +173,7 @@ heating the system. A stochastic process is used to keep the system in
 disequilibrium while the system is warm. Once a steady state is found the
 temperature is slowly cooled using an auto-adjustment algorithm.
 
-It remains to be verified that using this method leads to shorter paths.
+It remains to be verified that using this method leads to shorter routes.
 
 % vim:ft=tex:spell spelllang=en:autoindent
 

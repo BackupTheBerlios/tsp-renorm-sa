@@ -5,23 +5,63 @@ the combination of renormalization and TSA. To analyze the quality of the
 proposed technique the state of the system while seeking the solution for two
 different data sets is compared.
 
-\subsection{Overall Results}
-The shortest route for multiple problems was computed to demonstrate the
-improvement allowed by the TSA process. The problems used vary in
-the number of cities. To find an optimal result the only parameter which was
-changed is the beginning temperature of the TSA process. This
-is necessary to prevent very high acceptance rates (see equation
-\ref{eq:accept}) and provoke large entropy changes (see equation
-\ref{eq:entropy}). In general the initial temperature is higher for data sets
-with a large amount of cities than for a low amount of cities.
+\subsection{TSA configuration}
+To find the optimal results the TSA system has to be configured. The
+motivation to choose for a TSA process instead of a SA, is that TSA
+necessitates less fine tuning than SA. Furthermore, renormalization is 
+appreciated for the possibility to be applicable without any specific
+configuration. For these reasons we considered it inappropriate to seek
+parameters which resulted in the most optimal solution.
 
-In figure \ref{fig:results}~an overview is given of the results found. The
+This was possible for all parameters but for the begin temperature. By more
+closely observing equation \eqref{eq:accept} it is clear that whenever the
+energy is much larger than the temperature the exponent becomes very small.
+Especially for very large problems this can lead to underflows. Therefore the
+begin temperature was roughly adjusted considering the number of cities in a
+problem. No research has been conducted on the effects of the begin
+temperature on the behaviour of the TSA. Again, because no specific fine
+tuning is considered.
+
+The remaining parameters are chosen such that they reflect a specific TSA
+system. A large temperature adjustment factor ($\beta$, see section
+\ref{sec:temp}) allows the system to take longer to stabilize. The end
+temperature is set to prevent slow converging which are unable to optimize the
+path more. The perturbation sensitivity ($\alpha$, see section \ref{sec:per}) is set to
+react marginally to the Brownian motion. A summary of the values is given in
+table \ref{tab:param}.
+
+\subsection{Overall Results}
+The TSA process allows to improve the normalization. This is demonstrated by
+computing the shortest route for different problem sets. The problems used vary in
+the number of cities. To find an optimal result the only parameter which was
+changed is the beginning temperature of the TSA process.
+
+Compared to the worst results found by using renormalization TSA is on average
+21.22\% more accurate when approximating the shortest route. This value is
+based on nine problem sets of respectively, 127, 130, 198, 200, 445, 575, 657,
+1002 and 1060 cities. The standard deviation of the mean is $0.04$. 
+
+In Fig. \ref{fig:results}~an overview is given of the results found. The
 dark dots represent the optimal solution found at the end of the TSA process.
 The circles designate the solution found if TSA would not be used. The
 triangles denote the worst solution found during the TSA process. It is clear
 from the picture that seeking an optimal rotation angle leads to better
 approximations of the shortest route. Yet, as we shall see in the next section
 TSA also partly undoes the computational benefit obtained by using renormalization.
+
+To show the effect the number of cities has on the accuracy of the approximation a
+model is built. The model is 
+\[ 
+	shortest~route = \gamma \cdot cities 
+\]
+By fitting this model on the data using a least square estimation technique
+$\gamma$ is approximated to be 0.000180. The p-value of the model is
+0.0001795. Based on this it can be concluded that although the proposed
+approach less accurate as the number of cities increases, the deterioration is
+only 0.0180 \% per city.
+
+TSA allows to find a shorter route for all the problem sets. However the
+approximation becomes less accurate as the number of cities increase. 
 
 \ctable[caption={The results found compared to the shortest route for various
 	numbers of cities},
@@ -32,9 +72,28 @@ TSA also partly undoes the computational benefit obtained by using renormalizati
 		 dots show the optimal value found using TSA. The triangles denote the
 		 worse solution found during the TSA process.\\
 		 It can be concluded that using TSA improves the results
-		 considerably.}}{\FL 
+		 considerably.\\
+		 The results are computed as $(Found~Result) $ $/ (Optimal~Result) - 1$,
+		 where the optimal result are the results found by \cite{heidel}. To
+		 find the solutions the system is configured as displayed in table
+		 \ref{tab:param}.}}{\FL 
 		 \includegraphics[width=8cm]{fig/results}
 		 \LL}
+
+\ctable[caption={The parameters of the TSA system used to find the optimal
+				solution},
+				width=7cm,
+				label={tab:param}]{lc}{\tnote[a]{The begin temperature is changed
+				for each problem. This is necessary to prevent the left hand side
+				from equation \eqref{eq:accept} to become very small when the
+				energy i.e. the route length is very large.}}{\FL
+				\multicolumn{1}{c}{Parameter}&Value\ML
+				Begin Temperature&--\tmark[a]\NN
+				End Temperature&2\NN
+				Initial Rotation&0$\pi$\NN
+				Perturbation Sensitivity ($\alpha$)&0.3\NN
+				Temperature Adjustment ($\beta$)&200\LL}
+
 
 \subsection{Two data sets compared}
 To show that the TSA process increases the computing time considerably we
@@ -112,6 +171,7 @@ auto-adjusting schedule used by the TSA.
 		connecting 198 cities},
 		label={fig:res198},
 		figure,
+		pos=p,
 		star]{c}{\tnote[]{These graphs show the state of the TSA process which
 		searches the optimal rotation angle for the cities displayed in figure
 		\ref{fig:d198}. The first figure shows the amount of energy present in
@@ -120,7 +180,10 @@ auto-adjusting schedule used by the TSA.
 		time.\\
 		Because the energy in the system approaches zero at the end of the
 		process the system is in equilibrium. The equilibrium is found at an
-		angle of 0.9258 $\pi$ radian.}}{\FL
+		angle of 0.9258 $\pi$ radian.\\
+		The parameters of the TSA process are set to a begin temperature of
+		1000. The remaining parameters are configured the same as throughout
+		this work (see table \ref{tab:param}).}}{\FL
 		\includegraphics[width=15cm]{fig/d198energy}\NN
 		\includegraphics[width=15cm]{fig/d198temp}\NN
 		\includegraphics[width=15cm]{fig/d198rotation}\NN
@@ -130,6 +193,7 @@ auto-adjusting schedule used by the TSA.
 		connecting 575 cities},
 		label={fig:res575},
 		figure,
+		pos=p,
 		star]{c}{\tnote[]{These graphs show the state of the TSA process which
 		searches the optimal rotation angle for the cities displayed in figure
 		\ref{fig:d198}. The first figure shows the amount of energy present in
@@ -139,7 +203,10 @@ auto-adjusting schedule used by the TSA.
 		In the upper figure can be seen that the TSA is unable to find a state
 		where the temperature and the energy are low. This undesirable state
 		leads to a rotation angle of 0.0112 $\pi$ radian which defers
-		considerably from the optimal result 2.3126 $\pi$ radian.
+		considerably from the optimal result 2.3126 $\pi$ radian.\\
+		The parameters of the TSA process are set to a begin temperature of
+		5000. The remaining parameters are configured the same as throughout
+		this work (see table \ref{tab:param}).
 		}}{\FL
 		\includegraphics[width=15cm]{fig/rat575energy}\NN
 		\includegraphics[width=15cm]{fig/rat575temp}\NN
