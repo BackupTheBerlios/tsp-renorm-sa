@@ -1,18 +1,18 @@
 \section{Introduction}
-\IEEEPARstart{T}{he} Traveling Sales Person (TSP) problem\cite{lcns1994} is a very well known
-problem first proposed around 1800 by Sir William Rowan Hamilton and Thomas
-Penyngton Kirkman. The problem deals with a traveling salesman which needs to
-visit a number of cities. Since time is money, he would like to take the
-shortest route possible, but still visit all cities. This is a simple
-definition, but TSP is actually a quite large set of combinatorial problems.
-Examples of TSP problems are:
+\IEEEPARstart{T}{he} Traveling Sales Person (TSP) problem\cite{lcns1994} is a
+very well known problem first proposed around 1800 by Sir William Rowan
+Hamilton and Thomas Penyngton Kirkman. The problem deals with a traveling
+salesman which needs to visit a number of cities. Since time is money, he
+wants to take the shortest route possible, but still visit all cities. This is
+a simple definition, but TSP is actually a quite large set of combinatorial
+problems. Examples of TSP problems are:
 \begin{itemize}
-\item \textsc{Symmetric TSP problem:}  In this problem there is given a complete graph.
-The nodes of these graph are the cities and all cities are connected by
-unidirectional edges. The weight of the edge is the distance between the cities.
-The task is now to find the shortest tour which visits all cities in the graph,
-using each edge at most once (Hamiltonian tour). This tour has to end at the
-starting city.
+\item \textsc{Symmetric TSP problem:}  In this problem there is given a
+complete graph.  The nodes of these graph are the cities and all cities are
+connected by unidirectional edges. The weight of the edge is the distance
+between the cities.  The task is now to find the shortest tour which visits
+all cities in the graph, using each edge at most once (Hamiltonian tour). This
+tour has to end at the starting city.
 \item \textsc{Euclidean TSP:}  Euclidean TSP problem is a subset of the
 Symmetric TSP problem.  Here all the cities are specified by a point in the
 plane. The weight of the edges is calculated using the euclidean distance. It
@@ -37,12 +37,12 @@ have been made to find the optimal solution. Algorithms which mimic processes
 in various disciplines have been used. Examples of such processes are ant
 colonies, genetic mutation, neural networks, etc. 
 
-Real space renormalization\cite{yoshiyuki1995nms}, a technique from the field of theoretical physics,
-has been put forward as a fast approximation technique of the shortest route.
-However, this technique relies heavily on the distribution of the cities in
-the TSP problem. In this paper we analyze if simulated annealing, a process
-which has its analogy from the field of metallurgy, can improve the results
-found by renormalization.
+Real space renormalization \cite{yoshiyuki1995nms}, a technique from the field
+of theoretical physics, has been put forward as a fast approximation technique
+of the shortest route.  However, this technique is sensitive to the distribution
+of the cities in the TSP problem. In this paper we analyze if simulated
+annealing, a process which has its analogy from the field of metallurgy, can
+optimize the results found by renormalization.
 
 This paper is structured as follows. The next section delves deeper in the two
 algorithms and motivates the combination. The third section treats the results
