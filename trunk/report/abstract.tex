@@ -1,3 +1,17 @@
 \begin{abstract}
-...
+We propose a new strategy to solve the euclidean TSP. In the euclidean TSP the goal is to acquire the
+shortest tour which visits all the cities specified by a point in the plane. The distance is calculated 
+using the euclidean distance. The euclidean TSP is solved using the deterministic renormalization 
+method. In renormalization at first a coarse grained route is estimated. This is done by dividing the area
+into four cells. The exact shortest route is determined, which connects the cells where at least one city is 
+located. This route is refined by recursively dividing each cell and determine the shortest route again. 
+If this process is continued until 
+each cell contains at most one city, the estimated tour is known. The only problem is how the grid is 
+positioned. There is analyzed if thermodynamic simulated annealing can optimize the results found by 
+renormalization. In thermodynamic simulated annealing the TSP system is considered as a metal which 
+is cooling down. The energy in the system is equal to the length of the tour. In a hot state the rotation can 
+be changed significantly. If the metal is becoming colder the allowed rotations on the grid decreases.
+This allows to find optimal solutions without getting stuck in a local optima. Our results demonstrate that there
+is an improvement of 21 percent over the worst rotation angle. As the number of cities increase, the accuracy
+of the estimation decreases only 0.0180 percent per city.  
 \end{abstract}
